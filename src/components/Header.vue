@@ -13,9 +13,9 @@
         <el-menu-item index="/home">首页</el-menu-item>
         <el-menu-item index="/reading">阅读</el-menu-item>
         <el-menu-item index="/writing">写作</el-menu-item>
-        <el-menu-item index="/collection">收藏</el-menu-item>
+        <el-menu-item index="/collection">积累</el-menu-item>
         <!-- <el-menu-item index="/chat">聊天</el-menu-item> -->
-        <el-menu-item index="/chat">聊天</el-menu-item>
+        <el-menu-item index="/chat">对话</el-menu-item>
       </el-menu>
     </div>
 
