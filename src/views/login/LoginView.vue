@@ -30,6 +30,7 @@
         >
           登录
         </el-button>
+        <el-link disabled>没有账号？</el-link><el-link type="primary" @click="router.push('/register')">点击注册</el-link>
       </el-form>
     </el-card>
   </div>
@@ -38,6 +39,8 @@
 <script setup>
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useRouter } from 'vue-router';
+const router = useRouter();
 
 const form = ref(null);
 const loading = ref(false);

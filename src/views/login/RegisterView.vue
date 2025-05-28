@@ -12,6 +12,9 @@
         <el-form-item label="账号名" prop="username">
           <el-input v-model="formData.username" placeholder="请输入账号名" />
         </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="formData.email" placeholder="请输入邮箱账号" />
+        </el-form-item>
 
         <el-form-item label="密码" prop="password">
           <el-input
@@ -30,6 +33,7 @@
         >
           注册
         </el-button>
+        <el-link disabled>已有账号？</el-link><el-link type="primary" @click="router.push('/login')">点击登录</el-link>
       </el-form>
     </el-card>
   </div>
@@ -38,12 +42,14 @@
 <script setup>
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const form = ref(null);
 const loading = ref(false);
 
 const formData = ref({
   username: '',
+  email: '',
   password: ''
 });
 
@@ -51,6 +57,10 @@ const rules = {
   username: [
     { required: true, message: '请输入账号名', trigger: 'blur' },
     { min: 3, max: 15, message: '长度在3到15个字符之间', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },

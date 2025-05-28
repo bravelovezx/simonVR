@@ -27,6 +27,7 @@ const router=createRouter({
           path: "/",
           name: "index",
           component: IndexView,
+          redirect: "/home", // 默认重定向到 /home
           children: [
             {
                 path:"home",
