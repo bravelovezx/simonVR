@@ -1,7 +1,11 @@
 <template>
   <el-container class="main-container">
     <!-- 左侧文章列表 -->
+
     <el-aside width="300px" class="article-list">
+      <el-header class="aside-header" >
+        <h3>📁 文章列表</h3>
+      </el-header>
       <el-menu :default-active="activeArticle" @select="handleSelectArticle">
         <el-menu-item 
           v-for="article in articles" 
@@ -9,7 +13,7 @@
           :index="article.id.toString()"
         >
           <span>{{ article.title }}</span>
-          <el-tag v-if="article.isCollected" type="warning" size="small">已收藏</el-tag>
+          <el-tag v-if="article.isCollected" type="warning" size="small" style="margin-left: 5px;">已收藏</el-tag>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -152,6 +156,18 @@ const saveAnnotation = () => {
 </script>
 
 <style scoped>
+
+.aside-header {
+  padding: 15px 20px;
+  background-color: #565C63;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.aside-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #ffffff;
+}
 .main-container {
   height: 100vh;
 }

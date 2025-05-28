@@ -1,7 +1,7 @@
 <template>
   <el-header class="header">
     <div class="header-left">
-      <h2 class="site-name">📚 阅读笔记平台</h2>
+      <h2 class="site-name">Simon 英语学习平台</h2>
       <el-menu
         :default-active="$route.path"
         mode="horizontal"
@@ -10,38 +10,47 @@
         active-text-color="#1890ff"
         router
       >
-        <el-menu-item index="/home">首页</el-menu-item>
-        <el-menu-item index="/reading">阅读</el-menu-item>
-        <el-menu-item index="/writing">写作</el-menu-item>
-        <el-menu-item index="/collection">积累</el-menu-item>
+        <el-menu-item index="/home"><el-icon><HomeFilled /></el-icon> 首页</el-menu-item>
+        <el-menu-item index="/reading"><el-icon><Memo /></el-icon> 阅读</el-menu-item>
+        <el-menu-item index="/writing"><el-icon><EditPen /></el-icon> 写作</el-menu-item>
+        <el-menu-item index="/collection"><el-icon><Notebook /></el-icon> 积累</el-menu-item>
         <!-- <el-menu-item index="/chat">聊天</el-menu-item> -->
-        <el-menu-item index="/chat">对话</el-menu-item>
+        <el-menu-item index="/chat"><el-icon><ChatLineRound /></el-icon> 对话</el-menu-item>
       </el-menu>
     </div>
 
-    <div class="header-right">
-      <template v-if="isLoggedIn">
-        <el-dropdown @command="handleCommand">
-          <span class="el-dropdown-link">
-            👤 用户名<i class="el-icon-arrow-down el-icon--right"></i>
-          </span>
-          <template #dropdown>
-            <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-          </template>
-        </el-dropdown>
-      </template>
-      <template v-else>
-        <el-button plain @click="$router.push({ name: 'login' })">登录</el-button>
-        <el-button type="primary" @click="$router.push({ name: 'register' })">注册</el-button>
-      </template>
-    </div>
+
+  <div class="header-right">
+    <template v-if="isLoggedIn">
+      <!-- 使用 el-dropdown 包裹头像 -->
+      <el-dropdown @command="handleCommand" trigger="hover">
+        <el-avatar
+          :src=testavator
+          size="medium"
+          style="cursor: pointer;"
+        ></el-avatar>
+
+        <!-- 下拉菜单内容 -->
+        <template #dropdown>
+          <el-dropdown-item command="profile"><el-icon><User /></el-icon> 个人中心</el-dropdown-item>
+          <el-dropdown-item command="logout"><el-icon><DArrowRight /></el-icon> 退出登录</el-dropdown-item>
+        </template>
+      </el-dropdown>
+    </template>
+    <template v-else>
+      <el-button plain @click="$router.push({ name: 'login' })">登录</el-button>
+      <el-button type="primary" @click="$router.push({ name: 'register' })">注册</el-button>
+    </template>
+  </div>
+
   </el-header>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import testavator from '../assets/ai.png';
+
 
 const router = useRouter();
 const isLoggedIn = ref(true); // 模拟登录状态，可改为真实逻辑
@@ -93,5 +102,16 @@ const handleCommand = (command) => {
 
 .header-right .el-button {
   margin-left: 10px;
+}
+
+.header-right .el-avatar {
+  vertical-align: middle;
+  border: 1px solid #ddd;
+  transition: all 0.2s ease-in-out;
+}
+
+.header-right .el-avatar:hover {
+  border-color: #409EFF;
+  box-shadow: 0 0 5px rgba(64, 158, 255, 0.5);
 }
 </style>
