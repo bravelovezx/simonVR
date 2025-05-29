@@ -116,14 +116,14 @@ const features = ref([
     desc: 'AI辅助理解，实时词汇解析',
     icon: Reading,
     color: '#1890ff',
-    path: '/reading'
+    path: '/introreading'
   },
   {
     title: 'AI写作',
     desc: '智能语法纠错，写作风格优化',
     icon: EditPen,
     color: '#7c4dff',
-    path: '/writing'
+    path: '/introwriting'
   },
 
   {
@@ -131,7 +131,7 @@ const features = ref([
     desc: '情景化口语练习，发音实时评分',
     icon: ChatLineRound,
     color: '#ff9100',
-    path: '/chat'
+    path: '/introchat'
   },
     {
     title: '知识积累',

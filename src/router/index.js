@@ -10,8 +10,14 @@ import RegisterView from "@/views/login/RegisterView.vue";
 import IndexView from "@/views/IndexView.vue";
 import ProfileView from "@/views/learningviews/ProfileView.vue";
 
-import VocabularyView from "@/views/learningviews/collection/VocabularyVIew.vue";
+import VocabularyView from "@/views/learningviews/collection/VocabularyView.vue";
 import SentenceView from "@/views/learningviews/collection/SentenceView.vue";
+
+import IntroChat from "@/views/learningviews/introduction/IntroChat.vue";
+import IntroReading from "@/views/learningviews/introduction/IntroReading.vue";
+import IntroWriting from "@/views/learningviews/introduction/IntroWriting.vue";
+
+
 
 const router=createRouter({
     history:createWebHistory(import.meta.env.BASE_URL),
@@ -71,6 +77,22 @@ const router=createRouter({
                 path:"sentence",
                 name:"sentence",
                 component: SentenceView,
+              },
+              {
+                path:"introchat",
+                name:"introchat",
+                component: IntroChat,
+              },
+              {
+                path:"introreading",
+                name:"introreading",
+                component: IntroReading,
+              },
+              {
+
+                path:"introwriting",
+                name:"introwriting",
+                component: IntroWriting,
               }
           ],
         },
