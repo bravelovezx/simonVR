@@ -1,9 +1,13 @@
 <template>
   <div class="chat-view">
     <!-- 左侧：历史对话列表 -->
-    <el-aside class="chat-history" width="240px">
-      <div class="history-title">历史对话</div>
-      <el-scrollbar>
+    <el-aside class="chat-history" width="300px">
+      <!-- <div class="history-title">历史对话</div>
+        -->
+      <el-header class="history-title">
+        <h3>📁 历史对话</h3>
+      </el-header>
+      <!-- <el-scrollbar> -->
         <el-menu 
           :default-active="selectedIdx.toString()"
           class="history-list"
@@ -19,7 +23,7 @@
             <span>{{ item.title }}</span>
           </el-menu-item>
         </el-menu>
-      </el-scrollbar>
+      <!-- </el-scrollbar> -->
     </el-aside>
 
     <!-- 右侧：对话详情 -->
@@ -129,10 +133,14 @@ function addToCollection(idx) {
   border-right: 1px solid #ebeef5;
   
   .history-title {
-    padding: 16px;
+      padding: 15px 20px;
+      background-color: #565C63;
+      border-bottom: 1px solid #e4e7ed;
+  }
+  .history-title h3 {
+    margin: 0;
     font-size: 16px;
-    color: #303133;
-    border-bottom: 1px solid #ebeef5;
+    color: #ffffff;
   }
   
   :deep(.el-menu-item) {
@@ -157,6 +165,7 @@ function addToCollection(idx) {
     border-bottom: 1px solid #ebeef5;
     display: flex;
     align-items: center;
+    background-color: #F2F2F2;
   }
 }
 

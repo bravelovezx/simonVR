@@ -10,6 +10,9 @@ import RegisterView from "@/views/login/RegisterView.vue";
 import IndexView from "@/views/IndexView.vue";
 import ProfileView from "@/views/learningviews/ProfileView.vue";
 
+import VocabularyView from "@/views/learningviews/collection/VocabularyVIew.vue";
+import SentenceView from "@/views/learningviews/collection/SentenceView.vue";
+
 const router=createRouter({
     history:createWebHistory(import.meta.env.BASE_URL),
     routes: [
@@ -58,7 +61,17 @@ const router=createRouter({
               path: "profile", // 实际路径：/profile
               name: "profile",
               component: ProfileView,
-            }
+            },
+            {
+                path:"vocabulary",
+                name:"vocabulary",
+                component: VocabularyView,
+              },
+              {
+                path:"sentence",
+                name:"sentence",
+                component: SentenceView,
+              }
           ],
         },
         // {

@@ -5,17 +5,16 @@
       <el-menu
         :default-active="$route.path"
         mode="horizontal"
-        background-color="#ffffff"
-        text-color="#333"
-        active-text-color="#1890ff"
         router
+        :ellipsis="false"
       >
         <el-menu-item index="/home"><el-icon><HomeFilled /></el-icon> 首页</el-menu-item>
         <el-menu-item index="/reading"><el-icon><Memo /></el-icon> 阅读</el-menu-item>
         <el-menu-item index="/writing"><el-icon><EditPen /></el-icon> 写作</el-menu-item>
+        <el-menu-item index="/chat"><el-icon><ChatLineRound /></el-icon> 对话</el-menu-item>
         <el-menu-item index="/collection"><el-icon><Notebook /></el-icon> 积累</el-menu-item>
         <!-- <el-menu-item index="/chat">聊天</el-menu-item> -->
-        <el-menu-item index="/chat"><el-icon><ChatLineRound /></el-icon> 对话</el-menu-item>
+        <!--  -->
       </el-menu>
     </div>
 
@@ -67,6 +66,11 @@ const handleCommand = (command) => {
 
 <style scoped>
 .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index:1000;
   display: flex;
   justify-content: space-between;
   align-items: center;

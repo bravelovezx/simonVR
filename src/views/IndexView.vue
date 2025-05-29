@@ -18,5 +18,6 @@ import AiChatSidebar from '@/components/AiChatSidebar.vue';
 .main-content {
   padding: 20px;
   background-color: #f5f7fa;
+  padding-top: 64px;
 }
 </style>
