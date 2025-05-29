@@ -114,4 +114,13 @@ public class UserServiceImpl implements UserService {
         }
         userMapper.deleteById(userId);
     }
+
+    @Override
+    public User getUserByUsername(String username) {
+        User user = userMapper.findByUsername(username);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        return user;
+    }
 }

@@ -1,12 +1,14 @@
 package com.example.simon.controller;
 
 import com.example.simon.entity.User;
+import com.example.simon.security.JwtTokenUtil;
 import com.example.simon.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,9 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
     @PostMapping("/register")
     @Operation(summary = "用户注册")
     public ResponseEntity<?> register(@Valid @RequestBody User user, BindingResult bindingResult) {
@@ -36,7 +41,11 @@ public class UserController {
 
         try {
             User registeredUser = userService.register(user);
-            return ResponseEntity.ok(registeredUser);
+            String token = jwtTokenUtil.generateToken(registeredUser);
+            Map<String, Object> response = new HashMap<>();
+            response.put("user", registeredUser);
+            response.put("token", token);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
@@ -49,12 +58,25 @@ public class UserController {
     public ResponseEntity<?> login(@RequestParam String username, @RequestParam String password) {
         try {
             User user = userService.login(username, password);
-            if (user != null) {
-                return ResponseEntity.ok(user);
-            }
+            String token = jwtTokenUtil.generateToken(user);
+            Map<String, Object> response = new HashMap<>();
+            response.put("user", user);
+            response.put("token", token);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("message", "用户名或密码错误");
+            error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @GetMapping("/current")
+    @Operation(summary = "获取当前登录用户信息")
+    public ResponseEntity<?> getCurrentUser() {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userService.getUserByUsername(username);
+            return ResponseEntity.ok(user);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
