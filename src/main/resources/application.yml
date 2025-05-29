@@ -4,9 +4,9 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/simon?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
-    username: root
-    password: root
+    url: jdbc:mysql://123.249.20.245:3306/simon?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: simon
+    password: f3ALMbFCDnyeKwpK
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
