@@ -9,7 +9,7 @@ export default defineConfig({
   server:{
   proxy:{
       "/api":{
-        target:"http://117.72.80.248:9999",//之后修改为后端url和端口
+        target:"http://123.249.20.245:8080",//之后修改为后端url和端口
         changeOrigin:true
       }
     }

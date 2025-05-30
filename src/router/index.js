@@ -3,7 +3,7 @@ import { createRouter,createWebHistory } from "vue-router";
 import Home from "@/views/learningviews/HomeView.vue";
 import ReadingView from "@/views/learningviews/ReadingView.vue";
 import WritingView from "@/views/learningviews/WritingView.vue";
-import CollectionView from "@/views/learningviews/CollectionView.vue";
+
 import ChatView from "@/views/learningviews/ChatView.vue";
 import LoginView from "@/views/login/LoginView.vue";
 import RegisterView from "@/views/login/RegisterView.vue";
@@ -16,7 +16,7 @@ import SentenceView from "@/views/learningviews/collection/SentenceView.vue";
 import IntroChat from "@/views/learningviews/introduction/IntroChat.vue";
 import IntroReading from "@/views/learningviews/introduction/IntroReading.vue";
 import IntroWriting from "@/views/learningviews/introduction/IntroWriting.vue";
-
+import IntroCollection from "@/views/learningviews/introduction/IntroCollection.vue";
 
 
 const router=createRouter({
@@ -56,7 +56,7 @@ const router=createRouter({
             {
               path: "collection", // 实际路径：/collection
               name: "collection",
-              component: CollectionView,
+              component:IntroCollection,
             },
             {
               path: "chat", // 实际路径：/chat
