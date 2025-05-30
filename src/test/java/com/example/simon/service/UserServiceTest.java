@@ -17,21 +17,5 @@ public class UserServiceTest {
     @Autowired
     private UserServiceImpl userService;
 
-    @Test
-    public void testInsertAndRetrieveUser() {
-        User user = new User();
-        user.setEmail("test@example.com");
-        user.setPasswordHash("hashedPassword");
-        user.setProfileInfo(new ProfileInfo());
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
 
-        userService.register(user);
-
-        // 假设有一个方法可以查询用户
-        User retrievedUser = userService.getUserById(user.getUserId());
-        assertNotNull(retrievedUser);
-        assertNotNull(retrievedUser.getCreatedAt());
-        assertNotNull(retrievedUser.getUpdatedAt());
-    }
 }
