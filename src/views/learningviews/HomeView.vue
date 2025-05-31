@@ -221,6 +221,8 @@ const navigateTo = (path) => {
 }
 
 .feature-card {
+  padding: 30px;
+  margin-bottom: 20px;
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
   border: none;

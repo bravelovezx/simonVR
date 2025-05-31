@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useUserStore } from '@/store/uesr';
 
 const request=axios.create({
   withCredentials: true, // 允许携带cookie
@@ -9,6 +10,21 @@ const request=axios.create({
   }
 
 })
+
+// 请求拦截器：自动添加 token
+request.interceptors.request.use(config => {
+  const userStore = useUserStore();
+
+  if (userStore.token) {
+    config.headers['Authorization'] = `Bearer ${userStore.token}`;
+  }
+
+  return config;
+}, error => {
+  console.error("请求拦截错误", error);
+  return Promise.reject(error);
+});
+
 
 // 响应拦截器（统一错误处理）
 request.interceptors.response.use(
@@ -21,8 +37,15 @@ request.interceptors.response.use(
       // console.error(res.message || '业务错误');
       // return Promise.reject(new Error(res.message || 'Error'));
     }
-    console.error(res.message || '业务错误');
-      return Promise.reject(new Error(res.message || 'Error'));
+    else if(response.status==400){
+      console.error(res.message || '业务错误');
+      return res.message || '业务错误';
+    }
+      else if(response.status==403){
+      console.error(res.message || '业务错误');
+      return res.message;
+    }
+    
   },
   error => {
     let errorMessage = '请求错误';

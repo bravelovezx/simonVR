@@ -20,6 +20,7 @@
             <template #header>
               <div class="card-header">
                 <span>基本信息</span>
+                
                 <el-button type="primary" size="small" @click="handleSave">保存修改</el-button>
               </div>
             </template>
@@ -64,7 +65,12 @@
                   <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
                 </el-upload>
               </el-form-item>
+              <el-form-item label="密码">
+                  <el-button type="primary" size="small" @click="ChangePassword">修改密码</el-button>
+              </el-form-item>
+              
             </el-form>
+            
           </el-card>
         </el-col>
 
@@ -112,6 +118,8 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/store/uesr';
+import request from '@/utils/request'
 import {
   User,
   Message,
@@ -120,9 +128,11 @@ import {
   Plus
 } from '@element-plus/icons-vue'
 
+const userStore = useUserStore();
+
 // 用户信息数据
-const userInfo = reactive({
-  username: 'EnglishLearner',
+const userInfo = ref({
+  username: userStore.username,
   realname: '张小明',
   email: 'user@example.com',
   gender: 1,
@@ -163,6 +173,12 @@ const progressFormat = (percentage) => `课程进度 ${percentage}%`
 const handleAvatarSuccess = (res) => {
   userInfo.avatar = res.data.url
   ElMessage.success('头像更新成功')
+}
+
+const ChangePassword = () => {
+  const username= userStore.username;
+  
+  ElMessage.success('密码修改功能待实现')
 }
 
 // 保存处理

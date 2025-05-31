@@ -1,9 +1,14 @@
 <script setup>
 import { ref } from 'vue';
+import qs from 'qs';
 import { useRouter } from 'vue-router';
 import { ElForm, ElFormItem, ElInput, ElButton, ElCard, ElIcon, ElLink } from 'element-plus';
 import request from '@/utils/request';
 import { ElNotification } from 'element-plus'
+import axios from 'axios';
+import { useUserStore } from '@/store/uesr';
+const userStore = useUserStore();
+// const useStore = userStore();
 const router = useRouter();
 const formData = ref({
   username: '',
@@ -11,17 +16,35 @@ const formData = ref({
 });
 const loading = ref(false);
 
+
+
 const handleLogin = async () => {
   loading.value = true;
   try {
-    // 调用登录API
-    const response = await request.post('/api/users/login', {
+    const response=await request.post('/api/users/login', {
       username: formData.value.username,
       password: formData.value.password
+    },{
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     });
+    // 调用登录API
+  //   console.log('登录数据:', formData.value);
+  //   const response = await request.post('/api/users/login',  headers: {
+  //   'Content-Type': 'application/x-www-form-urlencoded'
+  // },qs.stringify(formData));
+    console.log(response)
     
     // 登录成功后保存token
-    localStorage.setItem('token', response.data.token);
+    // localStorage.setItem('token', response.data.token);
+    ElNotification({
+      title: '登录成功',
+      message: '欢迎回来！',
+      type: 'success',
+      duration: 3000
+    });
+    userStore.login(formData.value.username, response.token);
     
     // 跳转到首页
     router.push('/');
@@ -67,7 +90,7 @@ const handleLogin = async () => {
         </el-form-item>
 
         <el-form-item label="密码 " prop="password">
-          <el-input>
+          <el-input v-model="formData.password" type="password" placeholder="">
             <template #prefix>
               <el-icon><lock /></el-icon>
             </template>
@@ -79,6 +102,7 @@ const handleLogin = async () => {
           class="login-btn"
           native-type="submit"
           :loading="loading"
+          @click="handleLogin"
         >
           <span class="btn-text">Unlock Your Potential</span>
           <el-icon class="icon-arrow"><arrow-right /></el-icon>

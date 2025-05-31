@@ -1,7 +1,7 @@
 <template>
   <el-header class="header">
     <div class="header-left">
-      <h2 class="site-name">Simon 英语学习平台</h2>
+      <h2 class="site-name">Simon AI+英语学习平台</h2>
       <el-menu
         :default-active="$route.path"
         mode="horizontal"
@@ -56,7 +56,9 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import testavator from '../assets/ai.png';
-
+import { useUserStore } from '@/store/uesr';
+import { ElNotification } from 'element-plus'
+const userStore = useUserStore();
 
 const router = useRouter();
 const isLoggedIn = ref(true); // 模拟登录状态，可改为真实逻辑
@@ -64,7 +66,15 @@ const isLoggedIn = ref(true); // 模拟登录状态，可改为真实逻辑
 const handleCommand = (command) => {
   if (command === 'logout') {
     isLoggedIn.value = false;
-    ElMessage.success('已退出');
+    userStore.logout(); // 调用用户存储的登出方法
+    ElNotification({
+      title: '退出登录成功',
+      message: '欢迎再次使用！',
+      type: 'success',
+      duration: 3000
+    });
+    router.push('/login'); // 跳转到登录页面
+    // ElMessage.success('已退出');
   } else if (command === 'profile') {
     router.push('/profile'); // 假设存在 profile 页面
   }
