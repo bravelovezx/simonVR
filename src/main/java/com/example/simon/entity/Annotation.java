@@ -8,8 +8,7 @@ import lombok.EqualsAndHashCode;
 public class Annotation extends BaseEntity {
     private Integer annotationId;
     private Integer userId;
-    private String module; // writing, reading, dialogue
-    private Integer refId;
     private String positionJson;
+    private String original;
     private String annotationContent;
 }
