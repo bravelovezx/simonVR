@@ -82,12 +82,13 @@
       :current-word="currentWord"
       @refresh="loadWords"
     />
+    
   </div>
 </template>
 
 <script setup>
 import { ref, computed,watch } from 'vue'
-import { Clock, Document, Search, CirclePlus } from '@element-plus/icons-vue'
+import { Clock, Document, Search, CirclePlus, Edit, Delete } from '@element-plus/icons-vue'
 import WordDialog from '@/components/WordDialog.vue'
 // import SentenceDialog from './SentenceDialog.vue'
 
@@ -95,7 +96,44 @@ const activeTab = ref('vocabulary')
 
 // 词汇相关逻辑
 const searchWord = ref('')
-const wordList = ref([])
+const wordList = ref([
+  {
+    id: 1,
+    word: 'serendipity',
+    phonetic: 'ˌserənˈdɪpəti',
+    translation: '意外发现美好事物的能力',
+    tags: ['高级词汇', '有趣'],
+    createTime: 1672531200000, // 2023-01-01
+    example: 'It was pure serendipity that I found this lovely antique shop.'
+  },
+  {
+    id: 2,
+    word: 'ephemeral',
+    phonetic: 'ɪˈfemərəl',
+    translation: '短暂的',
+    tags: ['文学', '形容词'],
+    createTime: 1675209600000, // 2023-02-01
+    example: 'The beauty of cherry blossoms is ephemeral.'
+  },
+  {
+    id: 3,
+    word: 'resilience',
+    phonetic: 'rɪˈzɪliəns',
+    translation: '恢复力，韧性',
+    tags: ['心理学', '能力'],
+    createTime: 1677628800000, // 2023-03-01
+    example: 'Children often show remarkable resilience after trauma.'
+  },
+  {
+    id: 4,
+    word: 'petrichor',
+    phonetic: 'ˈpetrɪkɔːr',
+    translation: '雨后的泥土气息',
+    tags: ['自然', '现象'],
+    createTime: 1680307200000, // 2023-04-01
+    example: 'The petrichor after the summer rain was refreshing.'
+  }
+])
 const filteredWords = computed(() => {
   return wordList.value.filter(item => 
     item.word.toLowerCase().includes(searchWord.value.toLowerCase()) ||
@@ -115,8 +153,30 @@ const openWordDialog = (word) => {
   wordDialogVisible.value = true
 }
 
+// 时间格式化函数修改
 const formatTime = (timestamp) => {
-  return new Date(timestamp).toLocaleDateString()
+  const date = new Date(timestamp)
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+}
+// 删除功能模拟
+const deleteWord = (id) => {
+  wordList.value = wordList.value.filter(word => word.id !== id)
+  // 实际开发中这里应调用API
+}
+// 添加/编辑功能模拟
+const saveWord = (wordData) => {
+  if (wordData.id) {
+    // 编辑现有词汇
+    const index = wordList.value.findIndex(w => w.id === wordData.id)
+    wordList.value.splice(index, 1, wordData)
+  } else {
+    // 添加新词汇
+    wordList.value.push({
+      ...wordData,
+      id: Date.now(),
+      createTime: Date.now()
+    })
+  }
 }
 
 // 此处应添加数据加载、筛选、API交互等逻辑

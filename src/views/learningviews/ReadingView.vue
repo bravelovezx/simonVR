@@ -69,6 +69,8 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
+
 
 // 文章示例数据
 const articles = ref([
@@ -151,7 +153,12 @@ const saveAnnotation = () => {
     })
     showAnnotationDialog.value = false
     annotationText.value = ''
-  }
+    ElMessage({
+    message: '添加批注成功',
+    type: 'success',
+    plain: true,
+  })
+}
 }
 </script>
 
