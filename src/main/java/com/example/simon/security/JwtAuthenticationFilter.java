@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -63,17 +64,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (jwtTokenUtil.validateToken(jwt, userDetails)) {
                     Integer userId = jwtTokenUtil.getUserIdFromToken(jwt);
+                    logger.info("=== JWT认证详细信息 ===");
+                    logger.info("从Token中解析的用户ID: {}", userId);
+                    logger.info("用户名: {}", username);
 
                     Map<String, Object> details = new HashMap<>();
                     details.put("userId", userId);
+                    logger.info("设置到Authentication details中的userId: {}", userId);
+                    logger.info("完整的details对象: {}", details);
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
 
                     authentication.setDetails(details);
+                    logger.info("Authentication对象创建完成，details: {}", authentication.getDetails());
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     logger.debug("Successfully authenticated user: {} with ID: {}", username, userId);
+                    
+                    // 验证设置是否成功
+                    Authentication storedAuth = SecurityContextHolder.getContext().getAuthentication();
+                    Map<String, Object> storedDetails = (Map<String, Object>) storedAuth.getDetails();
+                    Integer storedUserId = (Integer) storedDetails.get("userId");
+                    logger.info("验证SecurityContext中存储的用户ID: {}", storedUserId);
+                    
+                    if (!userId.equals(storedUserId)) {
+                        logger.error("❌ 用户ID存储验证失败！期望: {}, 实际: {}", userId, storedUserId);
+                    } else {
+                        logger.info("✅ 用户ID存储验证成功: {}", storedUserId);
+                    }
                 } else {
                     logger.warn("Token validation failed for user: {}", username);
                 }

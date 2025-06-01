@@ -34,8 +34,34 @@ public class AccumulationController {
      */
     private Integer getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        logger.debug("=== getCurrentUserId() 方法调试 ===");
+        logger.debug("Authentication对象: {}", authentication);
+        logger.debug("Authentication类型: {}", authentication != null ? authentication.getClass().getName() : "null");
+        logger.debug("Authentication主体: {}", authentication != null ? authentication.getPrincipal() : "null");
+        
+        if (authentication == null) {
+            logger.error("Authentication为null，无法获取用户ID");
+            throw new RuntimeException("Authentication为null，用户未认证");
+        }
+        
         Map<String, Object> details = (Map<String, Object>) authentication.getDetails();
-        return (Integer) details.get("userId");
+        logger.debug("Authentication.getDetails(): {}", details);
+        
+        if (details == null) {
+            logger.error("Authentication.getDetails()为null，无法获取用户ID");
+            throw new RuntimeException("Authentication details为null，无法获取用户ID");
+        }
+        
+        Integer userId = (Integer) details.get("userId");
+        logger.debug("从details中获取的userId: {}", userId);
+        
+        if (userId == null) {
+            logger.error("从Authentication details中获取的userId为null");
+            throw new RuntimeException("从Authentication details中获取的userId为null");
+        }
+        
+        logger.info("成功获取当前用户ID: {}", userId);
+        return userId;
     }
 
     /**
@@ -46,12 +72,23 @@ public class AccumulationController {
     public ResponseEntity<Map<String, Object>> createAccumulation(@RequestBody Accumulation accumulation) {
         logger.info("=== API调用: 创建积累记录 ===");
         
+        // 记录请求体中原始的用户ID
+        Integer originalUserId = accumulation.getUserId();
+        logger.info("请求体中的原始用户ID: {}", originalUserId);
+        
         // 自动设置当前用户ID
         Integer currentUserId = getCurrentUserId();
         accumulation.setUserId(currentUserId);
         
         logger.info("请求参数: {}", accumulation);
         logger.info("自动设置用户ID: {}", currentUserId);
+        logger.info("设置后accumulation中的用户ID: {}", accumulation.getUserId());
+        
+        // 验证设置是否成功
+        if (!currentUserId.equals(accumulation.getUserId())) {
+            logger.error("用户ID设置失败! 期望: {}, 实际: {}", currentUserId, accumulation.getUserId());
+            throw new RuntimeException("用户ID设置失败");
+        }
         
         Map<String, Object> response = new HashMap<>();
         try {

@@ -1,5 +1,5 @@
 -- 积累表字段修复脚本
--- 解决 type 字段数据截断问题
+-- 解决 type 字段数据截断问题和添加 updated_at 字段
 
 -- 1. 检查当前表结构
 -- DESCRIBE accumulations;
@@ -11,10 +11,16 @@ ALTER TABLE accumulations MODIFY COLUMN type VARCHAR(20) NOT NULL COMMENT '积�
 -- 方案二：使用ENUM类型（更严格）
 -- ALTER TABLE accumulations MODIFY COLUMN type ENUM('word', 'sentence') NOT NULL COMMENT '积累类型：word(单词) 或 sentence(句子)';
 
--- 3. 查看修改后的表结构
+-- 3. 添加 updated_at 字段（如果不存在）
+ALTER TABLE accumulations ADD COLUMN IF NOT EXISTS updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间';
+
+-- 4. 为 updated_at 字段添加索引（可选，便于按更新时间排序和查询）
+ALTER TABLE accumulations ADD INDEX IF NOT EXISTS idx_updated_at (updated_at);
+
+-- 5. 查看修改后的表结构
 DESCRIBE accumulations;
 
--- 4. 如果表不存在，创建完整的积累表
+-- 6. 如果表不存在，创建完整的积累表
 CREATE TABLE IF NOT EXISTS accumulations (
     accumulation_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '积累ID',
     user_id INT NOT NULL COMMENT '所属用户ID',
@@ -23,10 +29,12 @@ CREATE TABLE IF NOT EXISTS accumulations (
     meaning TEXT NOT NULL COMMENT '当前语境下含义',
     position_json JSON COMMENT '位置信息JSON：module(模块) + ref_id(关联ID) + 原文位置',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '积累时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     
     INDEX idx_user_id (user_id),
     INDEX idx_type (type),
     INDEX idx_created_at (created_at),
+    INDEX idx_updated_at (updated_at),
     
     CONSTRAINT fk_accumulations_user_id FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='积累表'; 

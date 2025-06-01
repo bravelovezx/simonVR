@@ -21,21 +21,48 @@ public class AccumulationServiceImpl implements AccumulationService {
 
     @Override
     public Accumulation createAccumulation(Accumulation accumulation) {
-        logger.info("开始创建积累记录: {}", accumulation);
+        logger.info("=== Service层: 开始创建积累记录 ===");
+        logger.info("接收到的积累记录对象: {}", accumulation);
+        logger.info("接收到的用户ID: {}", accumulation != null ? accumulation.getUserId() : "null");
+        
         try {
             if (accumulation == null) {
                 logger.error("创建积累记录失败: 积累记录不能为空");
                 throw new IllegalArgumentException("积累记录不能为空");
             }
             
+            // 记录传入时的用户ID
+            Integer originalUserId = accumulation.getUserId();
+            logger.info("Service层接收到的原始用户ID: {}", originalUserId);
+            
             // 设置创建时间
             LocalDateTime now = LocalDateTime.now();
             accumulation.setCreatedAt(now);
+            accumulation.setUpdatedAt(now);  // 创建时也设置更新时间
+            logger.info("设置创建时间: {}", now);
+            logger.info("设置更新时间: {}", now);
             
-            // 验证必填字段
+            // 验证必填字段（在验证前再次确认用户ID）
+            logger.info("验证前的用户ID: {}", accumulation.getUserId());
             validateAccumulation(accumulation);
+            logger.info("验证后的用户ID: {}", accumulation.getUserId());
             
+            // 插入数据库前最后一次确认用户ID
+            logger.info("数据库插入前的用户ID: {}", accumulation.getUserId());
             accumulationMapper.insert(accumulation);
+            
+            // 插入后检查生成的ID和用户ID
+            logger.info("数据库插入后 - 积累记录ID: {}, 用户ID: {}", 
+                accumulation.getAccumulationId(), accumulation.getUserId());
+            
+            // 验证插入后的用户ID是否被修改
+            if (originalUserId != null && !originalUserId.equals(accumulation.getUserId())) {
+                logger.error("❌ 用户ID在插入过程中被修改！原始: {}, 插入后: {}", 
+                    originalUserId, accumulation.getUserId());
+            } else {
+                logger.info("✅ 用户ID在插入过程中保持一致: {}", accumulation.getUserId());
+            }
+            
             logger.info("积累记录创建成功，ID: {}", accumulation.getAccumulationId());
             return accumulation;
         } catch (Exception e) {
@@ -124,6 +151,11 @@ public class AccumulationServiceImpl implements AccumulationService {
                 logger.error("更新积累记录失败: 积累记录或ID不能为空");
                 throw new IllegalArgumentException("积累记录或ID不能为空");
             }
+            
+            // 设置更新时间
+            LocalDateTime now = LocalDateTime.now();
+            accumulation.setUpdatedAt(now);
+            logger.info("设置更新时间: {}", now);
             
             // 验证必填字段
             validateAccumulation(accumulation);

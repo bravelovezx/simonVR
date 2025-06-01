@@ -13,15 +13,15 @@ public interface AccumulationMapper {
     /**
      * 插入积累记录
      */
-    @Insert("INSERT INTO accumulations (user_id, type, content, meaning, position_json, created_at) " +
-            "VALUES (#{userId}, #{type}, #{content}, #{meaning}, #{position,typeHandler=com.example.simon.typehandler.PositionTypeHandler}, #{createdAt})")
+    @Insert("INSERT INTO accumulations (user_id, type, content, meaning, position_json, created_at, updated_at) " +
+            "VALUES (#{userId}, #{type}, #{content}, #{meaning}, #{position,typeHandler=com.example.simon.typehandler.PositionTypeHandler}, #{createdAt}, #{updatedAt})")
     @Options(useGeneratedKeys = true, keyProperty = "accumulationId")
     void insert(Accumulation accumulation);
 
     /**
      * 根据ID和用户ID查询积累记录（权限验证）
      */
-    @Select("SELECT accumulation_id, user_id, type, content, meaning, position_json, created_at " +
+    @Select("SELECT accumulation_id, user_id, type, content, meaning, position_json, created_at, updated_at " +
             "FROM accumulations WHERE accumulation_id = #{accumulationId} AND user_id = #{userId}")
     @Results(id = "accumulationResultMap", value = {
             @Result(property = "accumulationId", column = "accumulation_id", jdbcType = JdbcType.INTEGER),
@@ -30,14 +30,15 @@ public interface AccumulationMapper {
             @Result(property = "content", column = "content", jdbcType = JdbcType.VARCHAR),
             @Result(property = "meaning", column = "meaning", jdbcType = JdbcType.VARCHAR),
             @Result(property = "position", column = "position_json", jdbcType = JdbcType.VARCHAR, typeHandler = PositionTypeHandler.class),
-            @Result(property = "createdAt", column = "created_at", jdbcType = JdbcType.TIMESTAMP)
+            @Result(property = "createdAt", column = "created_at", jdbcType = JdbcType.TIMESTAMP),
+            @Result(property = "updatedAt", column = "updated_at", jdbcType = JdbcType.TIMESTAMP)
     })
     Accumulation selectByIdAndUserId(Integer accumulationId, Integer userId);
 
     /**
      * 根据用户ID查询积累记录列表
      */
-    @Select("SELECT accumulation_id, user_id, type, content, meaning, position_json, created_at " +
+    @Select("SELECT accumulation_id, user_id, type, content, meaning, position_json, created_at, updated_at " +
             "FROM accumulations WHERE user_id = #{userId} ORDER BY created_at DESC")
     @ResultMap("accumulationResultMap")
     List<Accumulation> selectByUserId(Integer userId);
@@ -45,7 +46,7 @@ public interface AccumulationMapper {
     /**
      * 根据用户ID和类型查询积累记录列表
      */
-    @Select("SELECT accumulation_id, user_id, type, content, meaning, position_json, created_at " +
+    @Select("SELECT accumulation_id, user_id, type, content, meaning, position_json, created_at, updated_at " +
             "FROM accumulations WHERE user_id = #{userId} AND type = #{type} ORDER BY created_at DESC")
     @ResultMap("accumulationResultMap")
     List<Accumulation> selectByUserIdAndType(Integer userId, String type);
@@ -54,7 +55,7 @@ public interface AccumulationMapper {
      * 更新积累记录
      */
     @Update("UPDATE accumulations SET type = #{type}, content = #{content}, meaning = #{meaning}, " +
-            "position_json = #{position,typeHandler=com.example.simon.typehandler.PositionTypeHandler} WHERE accumulation_id = #{accumulationId}")
+            "position_json = #{position,typeHandler=com.example.simon.typehandler.PositionTypeHandler}, updated_at = #{updatedAt} WHERE accumulation_id = #{accumulationId}")
     void update(Accumulation accumulation);
 
     /**
