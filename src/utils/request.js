@@ -42,7 +42,7 @@ request.interceptors.response.use(
       return res.message || '业务错误';
     }
       else if(response.status==403){
-      console.error(res.message || '业务错误');
+      console.error(res.message+"123" || '业务错误');
       return res.message;
     }
     
@@ -54,7 +54,7 @@ request.interceptors.response.use(
     } else {
       switch (error.response.status) {
         case 400:
-          errorMessage = response.data.message;
+          errorMessage = "bad request";
           console.log("1111111111111111111111111111111111111");
           break;
         case 401:
@@ -63,7 +63,7 @@ request.interceptors.response.use(
           // router.replace('/login');
           break;
         case 403:
-          errorMessage = "拒绝访问";
+          errorMessage = "拒绝访问aaaaa";
           break;
         case 404:
           errorMessage = `请求地址不存在: ${error.response.config.url}`;
@@ -81,3 +81,6 @@ request.interceptors.response.use(
 
 
 export default request
+
+
+//eyJhbGciOiJIUzUxMiJ9.eyJ1c2VySWQiOjUsImVtYWlsIjoic3RyaW5nQHFxLmNvbSIsInN1YiI6ImFkbWluIiwiaWF0IjoxNzQ4NzY5MDM5LCJleHAiOjE3NDg4NTU0Mzl9.xuxwf6d4qc7Ty2FEEIrh-tiNreTLT6QSjxCPCcbC-skoGZwOziCgNh7iWTLR0MOi_j_KN4PaG8ay6LnPw2BbzQ

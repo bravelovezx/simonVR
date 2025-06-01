@@ -28,16 +28,16 @@
           style="width: 100%"
           class="smart-table"
         >
-          <el-table-column prop="word" label="单词" sortable>
+          <el-table-column prop="content" label="单词" sortable>
             <template #default="{ row }">
               <div class="word-cell">
-                <span class="word">{{ row.word }}</span>
-                <span class="phonetic">/{{ row.phonetic }}/</span>
+                <span class="word">{{ row.content }}</span>
+                <!-- <span class="phonetic">/{{ row.phonetic }}/</span> -->
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="translation" label="释义" width="200" />
-          <el-table-column label="标签" width="180">
+          <el-table-column prop="meaning" label="释义" width="200" />
+          <!-- <el-table-column label="标签" width="180">
             <template #default="{ row }">
               <el-tag 
                 v-for="tag in row.tags" 
@@ -49,8 +49,23 @@
                 {{ tag }}
               </el-tag>
             </template>
+          </el-table-column> -->
+          <el-table-column prop="createdAt" label="添加时间" sortable width="140" />
+          <el-table-column label="位置信息" width="240">
+            <template #default="{ row }">
+              <div>
+                <div>模块: {{ row.position.module }}</div>
+                <div>位置: 第 {{ row.position.row }} 行，第 {{ row.position.column }} 列</div>
+                <div>有效性: 
+                  <el-tag :type="row.position.valid ? 'success' : 'danger'" size="small">
+                    {{ row.position.valid ? '有效' : '无效' }}
+                  </el-tag>
+                </div>
+              </div>
+            </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="添加时间" sortable width="140" />
+
+          <!-- <el-table-column prop="" label="位置" sortable width="140" /> -->
           <el-table-column label="操作" width="120">
             <template #default="{ row }">
               <el-button 
@@ -62,7 +77,7 @@
               </el-button>
               <el-popconfirm 
                 title="确认删除该词汇？" 
-                @confirm="deleteWord(row.id)"
+                @confirm="deleteWord(row.accumulationId)"
               >
                 <template #reference>
                   <el-button link type="danger">删除</el-button>
@@ -87,9 +102,11 @@
 </template>
 
 <script setup>
-import { ref, computed,watch } from 'vue'
+import { ref, computed,watch,onMounted } from 'vue'
 import { Clock, Document, Search, CirclePlus, Edit, Delete } from '@element-plus/icons-vue'
 import WordDialog from '@/components/WordDialog.vue'
+import request from '@/utils/request'
+import { ElMessage } from 'element-plus'
 // import SentenceDialog from './SentenceDialog.vue'
 
 const activeTab = ref('vocabulary')
@@ -97,47 +114,43 @@ const activeTab = ref('vocabulary')
 // 词汇相关逻辑
 const searchWord = ref('')
 const wordList = ref([
-  {
-    id: 1,
-    word: 'serendipity',
-    phonetic: 'ˌserənˈdɪpəti',
-    translation: '意外发现美好事物的能力',
-    tags: ['高级词汇', '有趣'],
-    createTime: 1672531200000, // 2023-01-01
-    example: 'It was pure serendipity that I found this lovely antique shop.'
-  },
-  {
-    id: 2,
-    word: 'ephemeral',
-    phonetic: 'ɪˈfemərəl',
-    translation: '短暂的',
-    tags: ['文学', '形容词'],
-    createTime: 1675209600000, // 2023-02-01
-    example: 'The beauty of cherry blossoms is ephemeral.'
-  },
-  {
-    id: 3,
-    word: 'resilience',
-    phonetic: 'rɪˈzɪliəns',
-    translation: '恢复力，韧性',
-    tags: ['心理学', '能力'],
-    createTime: 1677628800000, // 2023-03-01
-    example: 'Children often show remarkable resilience after trauma.'
-  },
-  {
-    id: 4,
-    word: 'petrichor',
-    phonetic: 'ˈpetrɪkɔːr',
-    translation: '雨后的泥土气息',
-    tags: ['自然', '现象'],
-    createTime: 1680307200000, // 2023-04-01
-    example: 'The petrichor after the summer rain was refreshing.'
-  }
+   {
+            "createdAt": "2025-06-01 15:32:51",
+            "accumulationId": 16,
+            "userId": 5,
+            "type": "word",
+            "content": "aaaa",
+            "meaning": "laborum dolore ex Excepteur",
+            "position": {
+                "module": "unknown",
+                "refId": 0,
+                "row": 1,
+                "column": 1,
+                "valid": false,
+                "validModule": false
+            }
+        },
+        {
+            "createdAt": "2025-06-01 15:32:01",
+            "accumulationId": 15,
+            "userId": 5,
+            "type": "word",
+            "content": "apple",
+            "meaning": "苹果",
+            "position": {
+                "module": "unknown",
+                "refId": 0,
+                "row": 1,
+                "column": 1,
+                "valid": false,
+                "validModule": false
+            }
+        },
 ])
 const filteredWords = computed(() => {
   return wordList.value.filter(item => 
-    item.word.toLowerCase().includes(searchWord.value.toLowerCase()) ||
-    item.translation.toLowerCase().includes(searchWord.value.toLowerCase())
+    item.content.toLowerCase().includes(searchWord.value.toLowerCase()) ||
+    item.meaning.toLowerCase().includes(searchWord.value.toLowerCase())
   )
 })
 
@@ -159,8 +172,15 @@ const formatTime = (timestamp) => {
   return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
 }
 // 删除功能模拟
-const deleteWord = (id) => {
-  wordList.value = wordList.value.filter(word => word.id !== id)
+const deleteWord = async(accumulationId) => {
+  const response=await request.delete(`/api/accumulations/${accumulationId}`)
+  if(response.success){
+    ElMessage.success('词汇删除成功')
+  }else{
+    ElMessage.error('词汇删除失败')
+  }
+  getWordList()
+  
   // 实际开发中这里应调用API
 }
 // 添加/编辑功能模拟
@@ -178,6 +198,29 @@ const saveWord = (wordData) => {
     })
   }
 }
+
+const loadWords= async () => {
+  getWordList()
+}
+
+const getWordList=  async () => {
+  try {
+    const response = await request.get('/api/accumulations/my/type/word')
+    wordList.value = response.data
+  } catch (error) {
+    console.error('获取词汇列表失败:', error)
+  }
+}
+
+onMounted(async() => {
+  // const response=await request.get('/api/accumulations/my/type/word')
+  // console.log(response.data)
+  // wordList.value=response.data
+  getWordList()
+
+  // 初始加载词汇数据
+})
+
 
 // 此处应添加数据加载、筛选、API交互等逻辑
 </script>

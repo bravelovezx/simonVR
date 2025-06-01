@@ -5,16 +5,16 @@
     width="600px"
   >
     <el-form :model="form" label-width="80px">
-      <el-form-item label="单词" required>
-        <el-input v-model="form.word" />
+      <el-form-item label="单词" required >
+        <el-input v-model="form.content"  :readonly="isEdit"/>
       </el-form-item>
-      <el-form-item label="音标">
+      <!-- <el-form-item label="音标">
         <el-input v-model="form.phonetic" />
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item label="释义" required>
-        <el-input v-model="form.translation" />
+        <el-input v-model="form.meaning" />
       </el-form-item>
-      <el-form-item label="标签">
+      <!-- <el-form-item label="标签">
         <el-select
           v-model="form.tags"
           multiple
@@ -29,15 +29,15 @@
             :value="tag"
           />
         </el-select>
-      </el-form-item>
-      <el-form-item label="例句">
+      </el-form-item> -->
+      <!-- <el-form-item label="例句">
         <el-input 
           v-model="form.example" 
           type="textarea" 
           :rows="3"
           placeholder="请输入单词的用法例句"
         />
-      </el-form-item>
+      </el-form-item> -->
     </el-form>
     
     <template #footer>
@@ -49,11 +49,14 @@
 
 <script setup>
 import { ref, computed,watch } from 'vue'
-
+import request from '@/utils/request'
+import { ElMessage } from 'element-plus'
 const props = defineProps({
   modelValue: Boolean,
   currentWord: Object
 })
+
+console.log('props', props.currentWord)
 
 const emit = defineEmits(['update:modelValue', 'refresh'])
 
@@ -75,19 +78,50 @@ watch(() => props.currentWord, (newVal) => {
 
 function initForm() {
   return {
-    word: '',
-    phonetic: '',
-    translation: '',
-    tags: [],
-    example: ''
+    type:"word",
+    content: '',
+    meaning: '',
+    position:{
+      module: 'reading',
+      refId:123,
+      row: 1,
+      column: 1
+    }
   }
 }
 
-const handleSubmit = () => {
-  if (!form.value.word || !form.value.translation) {
+const handleSubmit = async () => {
+  if (!form.value.content || !form.value.meaning) {
     return ElMessage.error('请填写必填字段')
   }
-  emit('refresh')
+
   visible.value = false
+
+  if (isEdit.value) {
+    // 编辑模式，只允许修改释义
+    console.log('编辑模式', form.value)
+    console.log('更新词汇', form.value.accumulationId)
+    const payload={
+      type: props.currentWord.type,
+      content: props.currentWord.content,
+      meaning: form.value.meaning,
+      position:{
+        module: props.currentWord.position.module,
+        refId: props.currentWord.position.refId,
+        row: props.currentWord.position.row,
+        column: props.currentWord.position.column
+      }
+    }
+    console.log('更新负载', payload)
+    const response = await request.put(`/api/accumulations/${form.value.accumulationId}`, payload)
+    console.log('更新响应', response)
+    ElMessage.success('更新成功')
+    emit('refresh')
+  } else {
+    // 新增模式
+    const response = await request.post('/api/accumulations', form.value)
+    ElMessage.success('添加成功')
+    emit('refresh')
+  }
 }
 </script>
