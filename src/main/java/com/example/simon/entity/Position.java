@@ -3,6 +3,7 @@ package com.example.simon.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * 位置信息实体类
@@ -39,6 +40,7 @@ public class Position {
     /**
      * 验证模块类型是否有效
      */
+    @JsonIgnore
     public boolean isValidModule() {
         return "writing".equals(module) || "reading".equals(module) || "dialogue".equals(module);
     }
@@ -46,6 +48,7 @@ public class Position {
     /**
      * 验证位置信息是否完整
      */
+    @JsonIgnore
     public boolean isValid() {
         return module != null && !module.trim().isEmpty() && 
                refId != null && refId > 0 &&

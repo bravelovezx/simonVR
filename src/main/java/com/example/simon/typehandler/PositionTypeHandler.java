@@ -66,8 +66,9 @@ public class PositionTypeHandler extends BaseTypeHandler<Position> {
         }
         
         try {
+            logger.debug("Attempting to parse JSON: {}", json);
             Position position = objectMapper.readValue(json, Position.class);
-            logger.debug("Converting JSON to Position: {} -> {}", json, position);
+            logger.debug("Successfully converted JSON to Position: {} -> {}", json, position);
             
             // 验证转换后的Position对象
             if (!position.isValid()) {
@@ -77,15 +78,11 @@ public class PositionTypeHandler extends BaseTypeHandler<Position> {
             return position;
         } catch (JsonProcessingException e) {
             logger.error("Error parsing JSON to Position: {}", json, e);
+            logger.error("JSON parsing error details: {}", e.getMessage());
             
-            // 尝试创建默认的Position对象
-            logger.warn("Creating default Position due to JSON parsing error");
-            Position defaultPosition = new Position();
-            defaultPosition.setModule("unknown");
-            defaultPosition.setRefId(0);
-            defaultPosition.setRow(1);
-            defaultPosition.setColumn(1);
-            return defaultPosition;
+            // 返回null而不是默认值，让调用方处理
+            logger.warn("Returning null Position due to JSON parsing error");
+            return null;
         }
     }
 } 

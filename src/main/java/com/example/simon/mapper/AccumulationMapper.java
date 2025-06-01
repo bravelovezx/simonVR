@@ -46,7 +46,7 @@ public interface AccumulationMapper {
     /**
      * 根据用户ID和类型查询积累记录列表
      */
-    @Select("SELECT accumulation_id, user_id, type, content, meaning, position_json, created_at, updated_at " +
+   @Select("SELECT accumulation_id, user_id, type, content, meaning, position_json, created_at, updated_at " +
             "FROM accumulations WHERE user_id = #{userId} AND type = #{type} ORDER BY created_at DESC")
     @ResultMap("accumulationResultMap")
     List<Accumulation> selectByUserIdAndType(Integer userId, String type);
