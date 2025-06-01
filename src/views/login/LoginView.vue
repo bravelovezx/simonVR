@@ -42,7 +42,7 @@ const handleLogin = async () => {
       title: '登录成功',
       message: '欢迎回来！',
       type: 'success',
-      duration: 3000
+      duration: 1500
     });
     userStore.login(formData.value.username, response.token);
     
@@ -55,7 +55,7 @@ const handleLogin = async () => {
       title: '登录失败',
       message: error.response?.data?.message || '发生错误，请稍后再试',
       type: 'error',
-      duration: 3000
+      duration: 1500
     });
   } finally {
     loading.value = false;

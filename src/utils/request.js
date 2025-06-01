@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useUserStore } from '@/store/uesr';
-
+import { ElMessage } from 'element-plus'
+import { ElNotification } from 'element-plus'
 const request=axios.create({
   withCredentials: true, // 允许携带cookie
     timeout:10000,
@@ -59,11 +60,18 @@ request.interceptors.response.use(
           break;
         case 401:
           errorMessage = "未授权，请重新登录";
+          ElMessage.error(errorMessage);
           // 自动跳转登录（根据项目需求）
           // router.replace('/login');
           break;
         case 403:
-          errorMessage = "拒绝访问aaaaa";
+          errorMessage = "拒绝访问,请登录";
+          ElNotification({
+            title: '授权问题',
+            message: errorMessage,
+            type: 'error',
+            duration: 1500
+          });
           break;
         case 404:
           errorMessage = `请求地址不存在: ${error.response.config.url}`;

@@ -44,8 +44,8 @@
       </el-dropdown>
     </template>
     <template v-else>
-      <el-button plain @click="$router.push({ name: 'login' })">登录</el-button>
-      <el-button type="primary" @click="$router.push({ name: 'register' })">注册</el-button>
+      <el-button plain @click="router.push('/login')">登录</el-button>
+      <el-button type="primary" @click="router.push('/register')">注册</el-button>
     </template>
   </div>
 
@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref ,computed} from 'vue';
 import { useRouter } from 'vue-router';
 import testavator from '../assets/ai.png';
 import { useUserStore } from '@/store/uesr';
@@ -61,8 +61,11 @@ import { ElNotification } from 'element-plus'
 const userStore = useUserStore();
 
 const router = useRouter();
-const isLoggedIn = ref(true); // 模拟登录状态，可改为真实逻辑
+// const isLoggedIn = ref(true); // 模拟登录状态，可改为真实逻辑
 
+
+// 根据 userStore 判断是否登录
+const isLoggedIn = computed(() => !!userStore.token && !!userStore.username);
 const handleCommand = (command) => {
   if (command === 'logout') {
     isLoggedIn.value = false;
@@ -71,7 +74,7 @@ const handleCommand = (command) => {
       title: '退出登录成功',
       message: '欢迎再次使用！',
       type: 'success',
-      duration: 3000
+      duration: 1500
     });
     router.push('/login'); // 跳转到登录页面
     // ElMessage.success('已退出');
