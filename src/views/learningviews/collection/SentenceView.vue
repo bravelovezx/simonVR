@@ -284,6 +284,11 @@ onMounted(()=>{
 </script>
 
 <style scoped>
+.collection-container {
+  padding: 20px;
+  background: #f9f9f9;
+}
+
 .sentence-list {
   display: grid;
   gap: 16px;

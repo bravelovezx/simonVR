@@ -87,6 +87,9 @@
 
       <!-- 批注对话框 -->
       <el-dialog v-model="showAnnotationDialog" title="添加批注" width="30%" >
+        <blockquote style="margin: 10px 0; padding: 10px; background-color: #f9f9f9;">
+          {{ selectedText }}
+        </blockquote>
         <el-input
           v-model="annotationText"
           type="textarea"
