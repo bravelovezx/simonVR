@@ -12,6 +12,8 @@ import ProfileView from "@/views/learningviews/ProfileView.vue";
 
 import VocabularyView from "@/views/learningviews/collection/VocabularyView.vue";
 import SentenceView from "@/views/learningviews/collection/SentenceView.vue";
+import AnnotationView from "@/views/learningviews/collection/AnnotationView.vue";
+
 
 import IntroChat from "@/views/learningviews/introduction/IntroChat.vue";
 import IntroReading from "@/views/learningviews/introduction/IntroReading.vue";
@@ -77,6 +79,11 @@ const router=createRouter({
                 path:"sentence",
                 name:"sentence",
                 component: SentenceView,
+              },
+              {
+                path:"annotation",
+                name:"annotation",
+                component: AnnotationView,
               },
               {
                 path:"introchat",

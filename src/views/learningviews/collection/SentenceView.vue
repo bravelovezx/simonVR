@@ -22,7 +22,7 @@
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
-            <el-select 
+            <!-- <el-select 
               v-model="filterSource" 
               placeholder="筛选来源" 
               clearable
@@ -34,7 +34,7 @@
                 :label="source"
                 :value="source"
               />
-            </el-select>
+            </el-select> -->
           </div>
         </div>
 
@@ -42,22 +42,22 @@
         <div class="sentence-list">
           <el-card 
             v-for="sentence in filteredSentences" 
-            :key="sentence.id"
+            :key="sentence.accumulationId"
             class="sentence-card"
           >
             <template #header>
               <div class="card-header">
                 <span class="sentence-source">
-                  《{{ sentence.source.title }}》 - {{ sentence.source.author }}
-                  <el-link 
-                    :href="sentence.source.url" 
+                  模块：{{ sentence.position.module }} - 位置：
+                  {{ sentence.position.row }} - {{ sentence.position.column }}
+                  <!-- <el-link 
                     target="_blank" 
                     type="info" 
                     :underline="false"
                     style="margin-left: 8px; font-size: 12px"
                   >
                     查看原文
-                  </el-link>
+                  </el-link> -->
                 </span>
                 <div class="card-actions">
                   <el-button 
@@ -69,7 +69,7 @@
                   </el-button>
                   <el-popconfirm 
                     title="确认删除该句子？" 
-                    @confirm="deleteSentence(sentence.id)"
+                    @confirm="deleteSentence(sentence.accumulationId)"
                   >
                     <template #reference>
                       <el-button type="danger" link>删除</el-button>
@@ -81,11 +81,11 @@
 
             <!-- 句子内容 -->
             <div class="sentence-content">
-              <div class="sentence-text">{{ sentence.sentence }}</div>
-              <div class="sentence-translation">{{ sentence.translation }}</div>
+              <div class="sentence-text">{{ sentence.content }}</div>
+              <div class="sentence-translation">{{ sentence.meaning}}</div>
               
               <!-- 批注展示 -->
-              <div class="annotations">
+              <!-- <div class="annotations">
                 <div 
                   v-for="annotation in sentence.annotations"
                   :key="annotation.id"
@@ -104,10 +104,10 @@
                   </div>
                   <div class="annotation-content">{{ annotation.content }}</div>
                 </div>
-              </div>
+              </div> -->
 
               <!-- 添加新批注 -->
-              <div class="new-annotation">
+              <!-- <div class="new-annotation">
                 <el-input
                   v-model="newAnnotationContent"
                   placeholder="添加新批注..."
@@ -137,7 +137,7 @@
                     添加批注
                   </el-button>
                 </div>
-              </div>
+              </div> -->
             </div>
           </el-card>
         </div>
@@ -154,62 +154,33 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed,onMounted } from 'vue'
 import { Search, DocumentAdd } from '@element-plus/icons-vue'
 import { ElTabs, ElTabPane, ElButton, ElInput, ElSelect, ElOption, ElCard, ElTag, ElLink, ElPopconfirm } from 'element-plus'
 import { ElIcon } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 
 import SentenceDialog from '@/components/SentenceDialog.vue'
 const activeTab = ref('sentences')
 
 // 示例数据
 const sentences = ref([
-  {
-    id: 1,
-    sentence: "The only way to do great work is to love what you do.",
-    translation: "成就一番伟业的唯一途径就是热爱自己的事业。",
-    source: {
-      title: "Steve Jobs' Stanford Commencement Speech",
-      author: "Steve Jobs",
-      url: "https://example.com/speech",
-      date: "2005-06-12"
-    },
-    annotations: [
-      {
-        id: 1,
-        type: "哲理",
-        content: "强调热情对工作成就的重要性",
-        createTime: 1677826800000
-      },
-      {
-        id: 2,
-        type: "语法",
-        content: "不定式作表语的结构：The way to do... is to...",
-        createTime: 1677913200000
-      }
-    ],
-    createTime: 1677826800000
-  },
-  {
-    id: 2,
-    sentence: "In the middle of difficulty lies opportunity.",
-    translation: "困难中孕育着机会。",
-    source: {
-      title: "爱因斯坦文集",
-      author: "Albert Einstein",
-      url: "https://example.com/einstein",
-      date: "1938"
-    },
-    annotations: [
-      {
-        id: 3,
-        type: "结构分析",
-        content: "倒装句结构，强调opportunity",
-        createTime: 1678086000000
-      }
-    ],
-    createTime: 1678000000000
-  }
+    {
+        "createdAt": "2025-06-01 18:13:49",
+        "updatedAt": "2025-06-01 18:13:51",
+        "accumulationId": 7,
+        "userId": 5,
+        "type": "sentence",
+        "content": "password",
+        "meaning": "密码",
+        "position": {
+            "module": "reading",
+            "refId": 99,
+            "row": 99,
+            "column": 99
+        }
+    }
 ])
 
 // 批注相关逻辑
@@ -233,14 +204,14 @@ const newAnnotationType = ref('词汇')
 // 搜索和过滤
 const searchQuery = ref('')
 const filterSource = ref('')
-const uniqueSources = computed(() => [...new Set(sentences.value.map(s => s.source.title))])
+// const uniqueSources = computed(() => [...new Set(sentences.value.map(s => s.source.title))])
 
 const filteredSentences = computed(() => {
   return sentences.value.filter(s => {
-    const matchSearch = s.sentence.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      s.translation.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchSource = filterSource.value ? s.source.title === filterSource.value : true
-    return matchSearch && matchSource
+    const matchSearch = s.content.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      s.meaning.toLowerCase().includes(searchQuery.value.toLowerCase())
+    // const matchSource = filterSource.value ? s.source.title === filterSource.value : true
+    return matchSearch
   })
 })
 
@@ -257,14 +228,24 @@ const addAnnotation = (sentence) => {
   newAnnotationContent.value = ''
 }
 
-const deleteSentence = (id) => {
-  sentences.value = sentences.value.filter(s => s.id !== id)
+const deleteSentence = async(accumulationId) => {
+    const response=await request.delete(`/api/accumulations/${accumulationId}`)
+  if(response.success){
+    ElMessage.success('句子删除成功')
+  }else{
+    ElMessage.error('句子删除失败')
+  }
+  getUserSentences()
 }
 
 // 时间格式化（复用词汇库的函数）
 const formatTime = (timestamp) => {
   const date = new Date(timestamp)
   return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`
+}
+
+const loadSentences=async()=>{
+  getUserSentences()
 }
 
 // 对话框控制（需要创建SentenceDialog组件）
@@ -275,6 +256,31 @@ const openSentenceDialog = (sentence) => {
   currentSentence.value = sentence ? { ...sentence } : null
   sentenceDialogVisible.value = true
 }
+
+const getUserSentences = async() => {
+  try{
+      const response=await request.get('/api/accumulations/my/type/sentence')
+      console.log(response)
+      if(response.success){
+          sentences.value = response.data || []
+          console.log('获取用户句子成功:', sentences.value)
+      }else{
+          ElMessage.error('获取用户句子失败，请稍后重试')
+      }
+      // 模拟获取用户句子数据
+  }catch(error){
+      console.error('获取用户句子失败:', error)
+      ElMessage.error('获取用户句子失败，请稍后重试')
+  }
+
+  // return sentences.value
+}
+
+
+onMounted(()=>{
+  getUserSentences()
+})
+
 </script>
 
 <style scoped>

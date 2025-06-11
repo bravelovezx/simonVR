@@ -331,4 +331,8 @@ const navigateTo = (path) => {
     font-size: 1.8rem;
   }
 }
+
+.el-card ::el-card-border-radius{
+  border-radius: 20px;
+}
 </style>

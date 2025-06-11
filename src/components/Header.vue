@@ -15,10 +15,11 @@
         <!-- <el-menu-item index="/collection"><el-icon><Notebook /></el-icon> 积累</el-menu-item> -->
         <el-sub-menu index="ai-features">
           <template #title>
-            <el-icon><Notebook /></el-icon> 积累
+            <el-icon><Notebook /></el-icon> 积累与批注
           </template>
           <el-menu-item index="/vocabulary"><el-icon class="ai-icon"><Collection /></el-icon>词汇积累</el-menu-item>
           <el-menu-item index="/sentence"><el-icon class="ai-icon"><Document /></el-icon>句子积累</el-menu-item>
+          <el-menu-item index="/annotation"><el-icon class="ai-icon"><Document /></el-icon>批注</el-menu-item>
         </el-sub-menu>
         <!-- <el-menu-item index="/chat">聊天</el-menu-item> -->
         <!--  -->
