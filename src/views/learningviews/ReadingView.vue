@@ -3,8 +3,22 @@
     <!-- 左侧文章列表 -->
 
     <el-aside width="300px" class="article-list">
-      <el-header class="aside-header" >
+      <!-- <el-header class="aside-header" >
         <h3>📁 文章列表</h3>
+      </el-header> -->
+      <el-header class="aside-header">
+        <div class="upload-section">
+          <el-upload
+            action="#"
+            :show-file-list="false"
+            :before-upload="beforeUpload"
+            accept=".txt,.docx"
+          >
+            <el-button type="primary" plain class="upload-btn">
+              <el-icon><Upload /></el-icon> 上传阅读材料
+            </el-button>
+          </el-upload>
+        </div>
       </el-header>
       <el-menu :default-active="activeArticle" @select="handleSelectArticle">
         <el-menu-item 
@@ -13,7 +27,7 @@
           :index="article.id.toString()"
         >
           <span>{{ article.title }}</span>
-          <el-tag v-if="article.isCollected" type="warning" size="small" style="margin-left: 5px;">已收藏</el-tag>
+          <!-- <el-tag v-if="article.isCollected" type="warning" size="small" style="margin-left: 5px;">已收藏</el-tag> -->
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -39,10 +53,9 @@
             <el-button size="small" @click="showAnnotationDialog = true">批注</el-button>
             <el-button 
               size="small" 
-              :type="isCollected ? 'warning' : ''"
               @click="toggleCollect"
             >
-              {{ isCollected ? '已收藏' : '收藏' }}
+              积累
             </el-button>
             <!-- <el-button size="small" @click="showToolbar=false">取消显示</el-button> -->
           </el-button-group>
@@ -145,14 +158,14 @@ Prepare for the future without fear.
 Keep faith and drop the fear.
 Don't believe your doubts and never doubt your beliefs.
 Life is wonderful if you know how to live it.`,
-    isCollected: false,
+    // isCollected: false,
     annotations: []
   },
   {
     id: 2,
     title: 'Modern Technology Development',
     content: 'Recent advancements in AI have revolutionized...',
-    isCollected: true,
+    // isCollected: true,
     annotations: []
   }
 ])
@@ -171,7 +184,7 @@ const showAnnotationDialog = ref(false)
 const annotationText = ref('')
 
 // 收藏状态
-const isCollected = ref(false)
+// const isCollected = ref(false)
 
 // 文章选择处理
 
@@ -197,9 +210,13 @@ onUnmounted(() => {
 
 const handleSelectArticle = (index) => {
   currentArticle.value = articles.value.find(a => a.id === Number(index))
-  isCollected.value = currentArticle.value.isCollected
+  // isCollected.value = currentArticle.value.isCollected
 }
 
+
+const getArticleList=async ()=>{
+  const res=await request.get("/api/readings/my")
+}
 
 
 
@@ -250,19 +267,25 @@ const handleLookup = async() => {
 const showCollectDialog = ref(false) // 是否显示收藏对话框
 const collectMeaning = ref('')       // 用户输入的释义
 const toggleCollect = () => {
-  if (isCollected.value) {
-    // 已收藏 → 取消收藏（可选）
-    isCollected.value = false
-    currentArticle.value.isCollected = false
-    showToolbar.value = false
-    return
-  }
 
   // 未收藏 → 弹出对话框让用户输入释义
   showCollectDialog.value = true
 }
 
-const saveToCollection = () => {
+//判断单词还是句子
+function determineType(text) {
+  const trimmedText = text.trim();
+
+  // 如果包含空格或句号/问号/感叹号等，认为是句子
+  if (/\s/.test(trimmedText) || /[.!?]/.test(trimmedText)) {
+    return "sentence";
+  } else {
+    return "word";
+  }
+}
+
+
+const saveToCollection = async() => {
   const meaning = collectMeaning.value.trim()
   const text = selectedText.value.trim()
 
@@ -270,53 +293,97 @@ const saveToCollection = () => {
     ElMessage.warning('请填写完整内容')
     return
   }
-
-  // 将选中内容和释义保存到当前文章的 collectedItems 数组中
-  currentArticle.value.collectedItems.push({
-    text,
-    meaning,
-    timestamp: new Date().toISOString()
+  console.log('保存到收藏:', text, meaning)
+  const type=determineType(text)
+  const response=await request.post('/api/accumulations',{
+    type:type,
+    content:text,
+    meaning:meaning,
+    position:{
+      module:'reading',
+      refId:123,
+      row:1,
+      column:1
+    }
+    
   })
+  console.log('保存响应:', response.success)
+  if(response.success){
+    ElMessage.success('已成功积累')
+  }else{
+    ElMessage.error('积累失败，请稍后重试')
+  }
+  // 将选中内容和释义保存到当前文章的 collectedItems 数组中
+  // currentArticle.value.collectedItems.push({
+  //   text,
+  //   meaning,
+  //   timestamp: new Date().toISOString()
+  // })
 
   // 更新收藏状态
-  isCollected.value = true
-  currentArticle.value.isCollected = true
+  // isCollected.value = true
+  // currentArticle.value.isCollected = true
 
   // 关闭对话框
   showCollectDialog.value = false
   collectMeaning.value = ''
   showToolbar.value = false
 
-  ElMessage.success('已成功积累')
+  // ElMessage.success('已成功积累')
 }
 
 
 
 // 保存批注
-const saveAnnotation = () => {
-  if (annotationText.value.trim()) {
-    currentArticle.value.annotations.push({
-      text: annotationText.value,
-      selection: selectedText.value,
-      timestamp: new Date().toISOString()
+const saveAnnotation = async() => {
+  // if (annotationText.value.trim()) {
+  //   currentArticle.value.annotations.push({
+  //     text: annotationText.value,
+  //     selection: selectedText.value,
+  //     timestamp: new Date().toISOString()
+  //   })
+    try{
+const res=await request.post('/api/annotations', {
+      position:{
+        module: 'reading',
+        refId:articles.value[0].id,
+        row:123,
+        column:456
+      },
+      original: selectedText.value,
+      annotationContent: annotationText.value
     })
+
+    console.log('this is res:',res)
+    if (res.success) {
+      ElMessage.success('添加批注成功')
+      // editDialogVisible.value = false
+    }else{
+      ElMessage.error('添加批注，请稍后重试')
+      // editDialogVisible.value = false
+    }
+    
+    
+    // fetchAnnotations()
+    
+  } catch (error) {
+    ElMessage.error('修改失败',error)
+    // editDialogVisible.value = false
+  }finally{
+// editDialogVisible.value = false
     showAnnotationDialog.value = false
     annotationText.value = ''
-    ElMessage({
-    message: '添加批注成功',
-    type: 'success',
-    plain: true,
-  })
+  }
+    
 }
-}
+// }
 </script>
 
 <style scoped>
 
 .aside-header {
-  padding: 15px 20px;
-  background-color: #565C63;
-  border-bottom: 1px solid #e4e7ed;
+  margin-top: 10px;
+  margin-left: 10px;
 }
 
 .aside-header h3 {

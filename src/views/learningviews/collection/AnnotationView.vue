@@ -116,6 +116,7 @@
         </span>
       </template>
     </el-dialog>
+    <!-- <button @click="fetchAnnotations">dianji </button> -->
   </div>
 </template>
 
@@ -126,26 +127,6 @@ import dayjs from 'dayjs'
 import request from '@/utils/request'
 
 // 模拟数据（实际使用时替换为API调用）
-const mockData = {
-  total: 2,
-  data: [
-    {
-      createdAt: "2025-06-11 10:54:31",
-      updatedAt: "2025-06-11 10:54:31",
-      annotationId: 10,
-      userId: 5,
-      position: {
-        module: "reading",
-        refId: 15,
-        row: 14,
-        column: 99
-      },
-      original: "This is an example sentence.",
-      annotationContent: "建议将动词时态改为过去时。"
-    }
-  ],
-  success: true
-}
 
 const annotations = ref([])
 const loading = ref(false)
@@ -168,12 +149,15 @@ const fetchAnnotations = async () => {
     loading.value = true
     // 实际替换为API调用
     // const res = await axios.get('/api/annotations')
-    // const res=request.get('/api/annotations/my')
-    // console.log(res)
-    // if(res.data.success){
-    //     mockData.data = res.data
-    // }
-    annotations.value = mockData.data
+    const res=await request.get('/api/annotations/my')
+    console.log('------------')
+    console.log('000000000',res)
+    if(res.success){
+        annotations.value= res.data
+    }else{
+        ElMessage.error(res.data.message || '获取批注数据失败')
+    }
+    // annotations.value = mockData.data
   } catch (error) {
     ElMessage.error('获取批注数据失败')
   } finally {
@@ -194,12 +178,21 @@ const handleSave = async () => {
     // await axios.put(`/api/annotations/${currentAnnotation.value.annotationId}`, {
     //   content: currentAnnotation.value.annotationContent
     // })
+
+    const testdata={
+      position: currentAnnotation.value.position,
+      original: currentAnnotation.value.original,
+      annotationContent: currentAnnotation.value.annotationContent
+    }
+    console.log("0000000000",testdata)
     const res=await request.put(`/api/annotations/${currentAnnotation.value.annotationId}`, {
       position: currentAnnotation.value.position,
-        original: currentAnnotation.value.original,
-        annotationContent: currentAnnotation.value.annotationContent
+      original: currentAnnotation.value.original,
+      annotationContent: currentAnnotation.value.annotationContent
     })
-    if (!res.data.success) {
+
+    console.log('this is res:',res)
+    if (!res.success) {
       ElMessage.error('修改失败，请稍后重试')
     }
     ElMessage.success('修改成功')

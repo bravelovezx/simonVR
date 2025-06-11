@@ -11,7 +11,7 @@
             accept=".txt,.docx"
           >
             <el-button type="primary" plain class="upload-btn">
-              <el-icon><Upload /></el-icon> 上传新文章
+              <el-icon><Upload /></el-icon> 上传文章
             </el-button>
           </el-upload>
         </div>
@@ -463,4 +463,6 @@ const formatTime = (timestamp) => {
   max-height: 70vh;
   overflow: auto;
 }
+
+
 </style>

@@ -119,8 +119,16 @@ const handleSubmit = async () => {
     emit('refresh')
   } else {
     // 新增模式
-    const response = await request.post('/api/accumulations', form.value)
-    ElMessage.success('添加成功')
+    try{
+        const response = await request.post('/api/accumulations', form.value)
+    
+        ElMessage.success('添加成功')
+    }catch (error) {
+        console.error('添加失败', error)
+        ElMessage.error('添加失败，请稍后重试')
+        return
+    }
+    
     emit('refresh')
   }
 }

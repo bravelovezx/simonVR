@@ -34,6 +34,7 @@ request.interceptors.response.use(
     // 如果后端返回业务状态码，可以在此统一处理（示例）
     const res = response.data;
     if (response.status == 200) { // 假设 code 0 表示成功
+      console.log("请求成功", res);
       return res; // 成功时直接返回数据
       // console.error(res.message || '业务错误');
       // return Promise.reject(new Error(res.message || 'Error'));
