@@ -293,14 +293,20 @@ public class AccumulationServiceImpl implements AccumulationService {
             throw new IllegalArgumentException("关联ID必须大于0");
         }
         
-        if (position.getRow() == null || position.getRow() <= 0) {
-            logger.error("Position验证失败: 行号必须大于0，当前值: {}", position.getRow());
-            throw new IllegalArgumentException("行号必须大于0");
+        if (position.getStartPos() == null || position.getStartPos() < 0) {
+            logger.error("Position验证失败: 起始位置不能小于0，当前值: {}", position.getStartPos());
+            throw new IllegalArgumentException("起始位置不能小于0");
         }
         
-        if (position.getColumn() == null || position.getColumn() < 0) {
-            logger.error("Position验证失败: 列号不能小于0，当前值: {}", position.getColumn());
-            throw new IllegalArgumentException("列号不能小于0");
+        if (position.getEndPos() == null || position.getEndPos() < 0) {
+            logger.error("Position验证失败: 终止位置不能小于0，当前值: {}", position.getEndPos());
+            throw new IllegalArgumentException("终止位置不能小于0");
+        }
+        
+        if (position.getEndPos() < position.getStartPos()) {
+            logger.error("Position验证失败: 终止位置不能小于起始位置，起始位置: {}，终止位置: {}", 
+                        position.getStartPos(), position.getEndPos());
+            throw new IllegalArgumentException("终止位置不能小于起始位置");
         }
         
         // 使用Position内置的验证方法

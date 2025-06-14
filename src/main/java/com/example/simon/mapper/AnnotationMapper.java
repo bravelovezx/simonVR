@@ -27,6 +27,21 @@ public interface AnnotationMapper {
     })
     List<Annotation> selectByUserId(@Param("userId") Integer userId);
 
+    /**
+     * 通过position中的module和refid查询对应批注
+     */
+    @Select("SELECT annotation_id, user_id, position_json as position, original, annotation_content, created_at, updated_at " +
+            "FROM annotations WHERE user_id = #{userId} AND " +
+            "JSON_EXTRACT(position_json, '$.module') = #{module} AND " +
+            "JSON_EXTRACT(position_json, '$.refId') = #{refId} " +
+            "ORDER BY JSON_EXTRACT(position_json, '$.startPos') ASC")
+    @Results({
+        @Result(property = "position", column = "position", typeHandler = PositionTypeHandler.class)
+    })
+    List<Annotation> selectByUserIdAndModuleAndRefId(@Param("userId") Integer userId, 
+                                                     @Param("module") String module, 
+                                                     @Param("refId") Integer refId);
+
     @Update("UPDATE annotations SET position_json = #{position, typeHandler=com.example.simon.typehandler.PositionTypeHandler}, original = #{original}, " +
             "annotation_content = #{annotationContent}, updated_at = #{updatedAt} " +
             "WHERE annotation_id = #{annotationId} AND user_id = #{userId}")

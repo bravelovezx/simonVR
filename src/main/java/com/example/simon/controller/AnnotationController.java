@@ -147,6 +147,40 @@ public class AnnotationController {
     }
 
     /**
+     * 通过position中的module和refid查询对应批注，返回批注内容和批注位置
+     */
+    @GetMapping("/by-position")
+    @Operation(summary = "通过模块和关联ID查询批注")
+    public ResponseEntity<Map<String, Object>> getAnnotationsByPosition(
+            @RequestParam String module, 
+            @RequestParam Integer refId) {
+        Integer currentUserId = getCurrentUserId();
+        
+        Map<String, Object> response = new HashMap<>();
+        try {
+            List<Annotation> annotations = annotationService.getAnnotationsByUserIdAndModuleAndRefId(
+                currentUserId, module, refId);
+            response.put("success", true);
+            response.put("data", annotations);
+            response.put("total", annotations.size());
+            response.put("module", module);
+            response.put("refId", refId);
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "查询批注失败");
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
      * 更新注释记录
      */
     @PutMapping("/{id}")

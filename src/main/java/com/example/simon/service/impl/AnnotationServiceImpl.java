@@ -67,6 +67,32 @@ public class AnnotationServiceImpl implements AnnotationService {
     }
 
     @Override
+    public List<Annotation> getAnnotationsByUserIdAndModuleAndRefId(Integer userId, String module, Integer refId) {
+        try {
+            if (userId == null) {
+                throw new IllegalArgumentException("用户ID不能为空");
+            }
+            if (module == null || module.trim().isEmpty()) {
+                throw new IllegalArgumentException("模块类型不能为空");
+            }
+            if (refId == null || refId <= 0) {
+                throw new IllegalArgumentException("关联ID必须大于0");
+            }
+
+            // 验证模块类型
+            String moduleType = module.trim();
+            if (!"writing".equals(moduleType) && !"reading".equals(moduleType) && !"dialogue".equals(moduleType)) {
+                throw new IllegalArgumentException("模块类型只能是writing、reading或dialogue");
+            }
+
+            List<Annotation> result = annotationMapper.selectByUserIdAndModuleAndRefId(userId, moduleType, refId);
+            return result;
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    @Override
     public Annotation updateAnnotation(Annotation annotation) {
         try {
             validateAnnotation(annotation);

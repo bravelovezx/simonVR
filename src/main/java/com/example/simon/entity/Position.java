@@ -28,14 +28,14 @@ public class Position {
     private Integer refId;
     
     /**
-     * 行号（从1开始）
+     * 起始位置（字符位置，从0开始）
      */
-    private Integer row;
+    private Integer startPos;
     
     /**
-     * 列号（从1开始）
+     * 终止位置（字符位置，从0开始）
      */
-    private Integer column;
+    private Integer endPos;
     
     /**
      * 验证模块类型是否有效
@@ -52,14 +52,15 @@ public class Position {
     public boolean isValid() {
         return module != null && !module.trim().isEmpty() && 
                refId != null && refId > 0 &&
-               row != null && row > 0 &&
-               column != null && column >= 0 &&
+               startPos != null && startPos >= 0 &&
+               endPos != null && endPos >= 0 &&
+               endPos >= startPos &&
                isValidModule();
     }
     
     @Override
     public String toString() {
-        return String.format("Position{module='%s', refId=%d, row=%d, column=%d}", 
-                           module, refId, row, column);
+        return String.format("Position{module='%s', refId=%d, startPos=%d, endPos=%d}", 
+                           module, refId, startPos, endPos);
     }
 } 

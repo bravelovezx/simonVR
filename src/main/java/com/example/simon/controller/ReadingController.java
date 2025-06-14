@@ -97,10 +97,10 @@ public class ReadingController {
         
         Map<String, Object> response = new HashMap<>();
         try {
-            Reading reading = readingService.getReadingByIdAndUserId(id, currentUserId);
-            if (reading != null) {
+            Map<String, Object> readingWithAnnotations = readingService.getReadingWithAnnotationsByIdAndUserId(id, currentUserId);
+            if (readingWithAnnotations != null && readingWithAnnotations.get("reading") != null) {
                 response.put("success", true);
-                response.put("data", reading);
+                response.put("data", readingWithAnnotations);
                 
                 return ResponseEntity.ok(response);
             } else {

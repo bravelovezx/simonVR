@@ -18,6 +18,11 @@ public interface ReadingService {
     Reading getReadingByIdAndUserId(Integer readingId, Integer userId);
 
     /**
+     * 根据ID获取阅读记录以及该记录对应的所有批注（仅当前用户可访问）
+     */
+    Map<String, Object> getReadingWithAnnotationsByIdAndUserId(Integer readingId, Integer userId);
+
+    /**
      * 根据用户ID获取阅读记录列表
      */
     List<Reading> getReadingsByUserId(Integer userId);

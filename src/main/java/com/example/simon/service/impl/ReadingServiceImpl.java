@@ -1,8 +1,10 @@
 package com.example.simon.service.impl;
 
 import com.example.simon.entity.Reading;
+import com.example.simon.entity.Annotation;
 import com.example.simon.mapper.ReadingMapper;
 import com.example.simon.service.ReadingService;
+import com.example.simon.service.AnnotationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,9 @@ public class ReadingServiceImpl implements ReadingService {
 
     @Autowired
     private ReadingMapper readingMapper;
+
+    @Autowired
+    private AnnotationService annotationService;
 
     @Override
     public Reading createReading(Reading reading) {
@@ -182,6 +187,38 @@ public class ReadingServiceImpl implements ReadingService {
             stats.put("sourceTypeStats", sourceTypeStats);
 
             return stats;
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    @Override
+    public Map<String, Object> getReadingWithAnnotationsByIdAndUserId(Integer readingId, Integer userId) {
+        try {
+            if (readingId == null) {
+                throw new IllegalArgumentException("阅读记录ID不能为空");
+            }
+            if (userId == null) {
+                throw new IllegalArgumentException("用户ID不能为空");
+            }
+
+            // 获取阅读记录
+            Reading reading = readingMapper.selectByIdAndUserId(readingId, userId);
+            if (reading == null) {
+                throw new IllegalArgumentException("阅读记录不存在或无权限访问");
+            }
+
+            // 获取该阅读记录对应的所有批注
+            List<Annotation> annotations = annotationService.getAnnotationsByUserIdAndModuleAndRefId(
+                userId, "reading", readingId);
+
+            // 构建返回结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("reading", reading);
+            result.put("annotations", annotations);
+            result.put("annotationCount", annotations.size());
+
+            return result;
         } catch (Exception e) {
             throw e;
         }

@@ -22,6 +22,11 @@ public interface AnnotationService {
     List<Annotation> getAnnotationsByUserId(Integer userId);
 
     /**
+     * 通过position中的module和refid查询对应批注，返回批注内容和批注位置
+     */
+    List<Annotation> getAnnotationsByUserIdAndModuleAndRefId(Integer userId, String module, Integer refId);
+
+    /**
      * 更新注释记录
      */
     Annotation updateAnnotation(Annotation annotation);
