@@ -30,9 +30,9 @@
         <el-table-column label="原文定位" width="200">
           <template #default="{ row }">
             <div class="position-info">
-              <el-tag type="success" size="small">{{ row.position.module }}</el-tag>
-              <span class="ref-id">#{{ row.position.refId }}</span>
-              <span class="location">(行{{ row.position.row }}, 列{{ row.position.column }})</span>
+              <el-tag type="success" size="small" @click="console.log(row.position.refId)">{{ row.position?.module||'other' }}</el-tag>
+              <span class="ref-id">#{{ row.position?.refId || 'id' }}</span>
+              <span class="location">{{ row.position?.startPos || "start"}}-{{ row.position?.endPos||"other" }})</span>
             </div>
           </template>
         </el-table-column>
@@ -154,6 +154,7 @@ const fetchAnnotations = async () => {
     console.log('000000000',res)
     if(res.success){
         annotations.value= res.data
+        console.log('获取批注数据成功', annotations.value)
     }else{
         ElMessage.error(res.data.message || '获取批注数据失败')
     }

@@ -47,18 +47,18 @@
           >
             <template #header>
               <div class="card-header">
-                <span class="sentence-source">
-                  模块：{{ sentence.position.module }} - 位置：
+                <!-- <span class="sentence-source">
+                   - 位置：
                   {{ sentence.position.row }} - {{ sentence.position.column }}
-                  <!-- <el-link 
+                  <el-link 
                     target="_blank" 
                     type="info" 
                     :underline="false"
                     style="margin-left: 8px; font-size: 12px"
                   >
                     查看原文
-                  </el-link> -->
-                </span>
+                  </el-link>
+                </span> -->
                 <div class="card-actions">
                   <el-button 
                     type="primary" 

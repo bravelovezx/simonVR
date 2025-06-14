@@ -23,10 +23,10 @@
       <el-menu :default-active="activeArticle" @select="handleSelectArticle">
         <el-menu-item 
           v-for="article in articles" 
-          :key="article.id" 
-          :index="article.id.toString()"
+          :key="article.readingId" 
+          :index="article.readingId.toString()"
         >
-          <span>{{ article.title }}</span>
+          <span>{{ article.articleTitle }}</span>
           <!-- <el-tag v-if="article.isCollected" type="warning" size="small" style="margin-left: 5px;">已收藏</el-tag> -->
         </el-menu-item>
       </el-menu>
@@ -39,8 +39,9 @@
         class="content-box"
         @mouseup="handleTextSelection"
       >
-        <h2>{{ currentArticle.title }}</h2>
-        <pre class="article-body">{{ currentArticle.content }}</pre>
+        <h2>{{ currentArticle.articleTitle }}</h2>
+        <el-tag>{{ currentArticle.sourceType }}</el-tag>
+        <pre class="article-body">{{ currentArticle.articleContent}}</pre>
         
         <!-- 浮动操作工具栏 -->
         <div 
@@ -149,30 +150,29 @@ import request from '@/utils/request'
 const isSelecting = ref(false)
 // 文章示例数据
 const articles = ref([
-  {
-    id: 1,
-    title: 'Life Is Wonderful',
-    content: `Face your past without regret.
-Handle your present with confidence.
-Prepare for the future without fear.
-Keep faith and drop the fear.
-Don't believe your doubts and never doubt your beliefs.
-Life is wonderful if you know how to live it.`,
-    // isCollected: false,
-    annotations: []
-  },
-  {
-    id: 2,
-    title: 'Modern Technology Development',
-    content: 'Recent advancements in AI have revolutionized...',
-    // isCollected: true,
-    annotations: []
-  }
+   {
+            "createdAt": "2025-06-14 16:23:24",
+            "updatedAt": "2025-06-14 16:23:24",
+            "readingId": 10,
+            "userId": 5,
+            "sourceType": "recommended",
+            "articleTitle": "Life Is Splendid",
+            "articleContent": "Face your past without regret.\nHandle your present with confidence.\nPrepare for the future without fear.\nKeep faith and drop the fear.\nDon't believe your doubts and never doubt your beliefs."
+        },
+        {
+            "createdAt": "2025-06-11 12:40:29",
+            "updatedAt": "2025-06-11 12:40:29",
+            "readingId": 9,
+            "userId": 5,
+            "sourceType": "recommended",
+            "articleTitle": "Life Is Wonderful",
+            "articleContent": "Face your past without regret.\nHandle your present with confidence.\nPrepare for the future without fear.\nKeep faith and drop the fear.\nDon't believe your doubts and never doubt your beliefs."
+        },
 ])
 
 // 当前选中文章
-const currentArticle = ref(articles.value[0])
-const activeArticle = ref('1')
+const currentArticle = ref(null)
+const activeArticle = ref('')
 
 // 文本选择相关
 const showToolbar = ref(false)
@@ -189,6 +189,9 @@ const annotationText = ref('')
 // 文章选择处理
 
 
+
+
+
 // 全局点击事件处理
 const handleClickOutside = (e) => {
   if (!isSelecting.value) {
@@ -200,6 +203,7 @@ const handleClickOutside = (e) => {
 // 监听 document 点击
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  getArticleList() // 获取文章列表
 })
 
 // 移除监听
@@ -208,14 +212,35 @@ onUnmounted(() => {
 })
 
 
+const getAnnotations=async ()=>{
+  try{
+    const res = await request.get(`api/readings/${currentArticle.value.readingId}`)
+    console.log('获取批注:', res)
+  }catch (error) {
+    console.error('获取批注失败:', error)
+    ElMessage.error('获取批注失败，请稍后重试')
+  }
+}
+
 const handleSelectArticle = (index) => {
-  currentArticle.value = articles.value.find(a => a.id === Number(index))
+  currentArticle.value = articles.value.find(a => a.readingId === Number(index))
   // isCollected.value = currentArticle.value.isCollected
+  console.log('选中文章:', currentArticle.value)
+  getAnnotations() // 获取当前文章的批注
+  
 }
 
 
 const getArticleList=async ()=>{
   const res=await request.get("/api/readings/my")
+  console.log('获取文章列表:', res)
+  if(res.success){
+    articles.value=res.data
+    // if(articles.value.length>0){
+    //   currentArticle.value=articles.value[0]
+    //   activeArticle.value=articles.value[0].id.toString()
+    // }
+  }
 }
 
 

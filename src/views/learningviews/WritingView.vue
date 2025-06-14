@@ -13,7 +13,12 @@
             <el-button type="primary" plain class="upload-btn">
               <el-icon><Upload /></el-icon> 上传文章
             </el-button>
+
+
           </el-upload>
+            <el-button type="primary" plain @click="addNewArticle">
+               新建作文
+            </el-button>
         </div>
       </el-header>
       
@@ -59,7 +64,9 @@
 
     <!-- 右侧文章内容 -->
     <el-main class="article-content">
+      
       <div v-if="currentVersion" class="content-box">
+        <div v-if="showToolbar" class="selection-toolbar" :style="{ left: toolbarPos.x + 'px', top: toolbarPos.y + 'px' }"></div>
         <div class="action-bar">
           <el-button 
             type="primary" 
@@ -80,18 +87,15 @@
           @mouseup="handleTextSelection"
         >
           <h2>{{ currentArticle.title }}</h2>
-          <el-input
+          <!-- <el-input
             v-if="editing"
             v-model="currentVersion.content"
             type="textarea"
             :rows="15"
             resize="none"
-          />
-          <pre v-else class="article-body">{{ currentVersion.content }}</pre>
-        </div>
-
-        <!-- 原有工具栏和对话框... -->
-         <!-- 浮动操作工具栏 -->
+          /> -->
+          <pre  class="article-body" @mouseup="handleTextSelection">{{ currentVersion.content }}</pre>
+           <!-- 浮动操作工具栏 -->
         <div 
           v-if="showToolbar" 
           class="selection-toolbar"
@@ -99,21 +103,64 @@
         >
           <el-button-group>
             <el-button size="small" @click="handleLookup">查词</el-button>
-            <el-button size="small" @click="showAnnotationDialog = true">批注</el-button>
+            <el-button size="small" @click="showAnotation">批注</el-button>
             <el-button 
               size="small" 
               :type="isCollected ? 'warning' : ''"
               @click="toggleCollect"
             >
-              {{ isCollected ? '已收藏' : '收藏' }}
+              积累
             </el-button>
-            <el-button size="small" @click="showToolbar=false">取消显示</el-button>
+            <el-button size="small">ai润色</el-button>
+            <!-- <el-button size="small" @click="showToolbar=false">取消显示</el-button> -->
           </el-button-group>
         </div>
-      </div>
+        </div>
 
-      <!-- 批注对话框 -->
-      <el-dialog v-model="showAnnotationDialog" title="添加批注" width="30%" >
+        <!-- 原有工具栏和对话框... -->
+
+
+
+        <!-- 查询对话框 -->
+       <el-dialog v-model="showLookupDialog" :title="`查词：${selectedText}`" width="40%">
+        <div v-if="isFetching" style="text-align: center;">
+          <el-spinner />
+          <p>正在查询...</p>
+        </div>
+      
+        <div v-else-if="lookupResult">
+          <h4>📘 单词释义</h4>
+          <p><strong>发音：</strong>{{ lookupResult.phonetic || '暂无' }}</p>
+        
+          <div v-for="(meaning, index) in lookupResult.meanings" :key="index">
+            <h5>👉 {{ meaning.partOfSpeech }}</h5>
+            <ul>
+              <li v-for="(def, i) in meaning.definitions" :key="i">
+                {{ def.definition }}
+                <br>
+                <em v-if="def.example">例句：{{ def.example }}</em>
+              </li>
+            </ul>
+          </div>
+        
+          <h4>🌐 中文翻译</h4>
+          <p>{{ lookupResult.translation || '暂无翻译' }}</p>
+        </div>
+      
+        <div v-else>
+          <p>暂无查询结果</p>
+        </div>
+      
+        <template #footer>
+          <el-button type="primary" @click="showLookupDialog = false">积累</el-button>
+          <el-button @click="showLookupDialog = false">关闭</el-button>
+        </template>
+      </el-dialog>
+         <!-- 批注对话框 -->
+        <el-dialog v-model="showAnnotationDialog" title="添加批注" width="30%" >
+        <blockquote style="margin: 10px 0; padding: 10px; background-color: #f9f9f9;">
+          {{ selectedText }}
+        </blockquote>
         <el-input
           v-model="annotationText"
           type="textarea"
@@ -125,7 +172,28 @@
           <el-button @click="showAnnotationDialog = false">取消</el-button>
           <el-button type="primary" @click="saveAnnotation">保存</el-button>
         </template>
-        </el-dialog>
+      </el-dialog>
+      </div>
+
+       <!-- 积累对话框 -->
+      <el-dialog v-model="showCollectDialog" title="收藏并积累" width="30%">
+        <p>您正在收藏以下内容：</p>
+        <blockquote style="margin: 10px 0; padding: 10px; background-color: #f9f9f9;">
+          {{ selectedText }}
+        </blockquote>
+      
+        <el-input
+          v-model="collectMeaning"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入该词/句的意思或用法"
+        />
+      
+        <template #footer>
+          <el-button @click="showCollectDialog = false">取消</el-button>
+          <el-button type="primary" @click="saveToCollection">积累</el-button>
+        </template>
+      </el-dialog>
 
       <!-- AI润色对话框 -->
       <el-dialog 
@@ -156,13 +224,41 @@
           </el-button>
         </template>
       </el-dialog>
+
+
+      <!-- 添加新文章对话框 -->
+      <el-dialog v-model="showNewArticleDialog" title="新建作文" width="40%">
+    <el-form>
+      <el-form-item label="文章标题">
+        <el-input v-model="newArticleForm.articleTitle" placeholder="请输入文章标题" />
+      </el-form-item>
+      <el-form-item label="版本标题">
+        <el-input v-model="newArticleForm.versionTitle" placeholder="如：初稿/草稿/正式版" />
+      </el-form-item>
+      <el-form-item label="内容">
+        <el-input
+          v-model="newArticleForm.content"
+          type="textarea"
+          :rows="8"
+          placeholder="请输入文章内容"
+        />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showNewArticleDialog = false">取消</el-button>
+      <el-button type="primary" @click="saveNewArticle">保存</el-button>
+    </template>
+  </el-dialog>
     </el-main>
   </el-container>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed,onMounted,onUnmounted } from 'vue'
 import { Document, Upload, MagicStick } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus';
+
+const showAnnotationDialog = ref(false)
 
 // 增强后的文章数据结构
 const articles = ref([
@@ -299,6 +395,118 @@ However, quantum decoherence time (currently averaging 50μs) remains the main b
 ]);
 
 
+
+// 查词功能
+
+const lookupResult=ref(null)
+const showLookupDialog=ref(false)//显示查词弹窗
+const isFetching=ref(false)//是否正在请求
+
+const handleLookup = async() => {
+  console.log('查询单词:', selectedText.value)
+  if (!selectedText.value.trim()) return
+  isFetching.value = true
+  lookupResult.value = null
+  showLookupDialog.value = true
+  // alert(`查询单词: ${selectedText.value}`)
+  try {
+    const response = await request.post('/api/lookup', {
+      text: selectedText.value
+    })
+
+    lookupResult.value = response.data
+  } catch (error) {
+    ElMessage.error('查询失败，请稍后再试')
+    console.error('查词失败:', error)
+  } finally {
+    isFetching.value = false
+  }
+  showToolbar.value = false
+}
+
+
+
+//批注部分
+const showAnotation = () => {
+  console.log('selectedText:', selectedText.value)
+  if (!selectedText.value) {
+    ElMessage.warning('请先选中一段文字')
+    return
+  }
+  showAnnotationDialog.value = true
+  console.log('showAnnotationDialog:', showAnnotationDialog.value)
+}
+
+//积累部分
+const showCollectDialog = ref(false) // 是否显示收藏对话框
+const collectMeaning = ref('')       // 用户输入的释义
+const toggleCollect = () => {
+
+  // 未收藏 → 弹出对话框让用户输入释义
+  showCollectDialog.value = true
+}
+
+//判断单词还是句子
+function determineType(text) {
+  const trimmedText = text.trim();
+
+  // 如果包含空格或句号/问号/感叹号等，认为是句子
+  if (/\s/.test(trimmedText) || /[.!?]/.test(trimmedText)) {
+    return "sentence";
+  } else {
+    return "word";
+  }
+}
+
+const saveToCollection = async() => {
+  const meaning = collectMeaning.value.trim()
+  const text = selectedText.value.trim()
+
+  if (!text || !meaning) {
+    ElMessage.warning('请填写完整内容')
+    return
+  }
+  console.log('保存到收藏:', text, meaning)
+  const type=determineType(text)
+  const response=await request.post('/api/accumulations',{
+    type:type,
+    content:text,
+    meaning:meaning,
+    position:{
+      module:'reading',
+      refId:123,
+      row:1,
+      column:1
+    }
+    
+  })
+  console.log('保存响应:', response.success)
+  if(response.success){
+    ElMessage.success('已成功积累')
+  }else{
+    ElMessage.error('积累失败，请稍后重试')
+  }
+  // 将选中内容和释义保存到当前文章的 collectedItems 数组中
+  // currentArticle.value.collectedItems.push({
+  //   text,
+  //   meaning,
+  //   timestamp: new Date().toISOString()
+  // })
+
+  // 更新收藏状态
+  // isCollected.value = true
+  // currentArticle.value.isCollected = true
+
+  // 关闭对话框
+  showCollectDialog.value = false
+  collectMeaning.value = ''
+  showToolbar.value = false
+
+  // ElMessage.success('已成功积累')
+}
+
+
+
 // 当前选中状态
 const activeArticle = ref('')
 const currentArticle = computed(() => {
@@ -374,6 +582,84 @@ const formatTime = (timestamp) => {
   const date = new Date(timestamp)
   return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate()}`
 }
+
+// 添加新文章
+
+const showNewArticleDialog = ref(false)
+const newArticleForm = ref({
+  articleTitle: '',
+  versionTitle: '',
+  content: ''
+})
+
+// 修改：点击按钮只弹窗
+const addNewArticle = () => {
+  showNewArticleDialog.value = true
+}
+
+// 新增：保存新文章
+const saveNewArticle = () => {
+  console.log('Saving new article:', newArticleForm)
+  if (!newArticleForm.value.articleTitle || !newArticleForm.value.versionTitle) 
+  {
+    ElMessage.error('文章标题和版本标题不能为空')
+    return
+  }
+  const newId = Date.now()
+  const newArticle = {
+    id: newId,
+    title: newArticleForm.value.articleTitle,
+    isCollected: false,
+    versions: [{
+      id: 1,
+      name: newArticleForm.value.versionTitle,
+      content: newArticleForm.value.content,
+      time: Date.now()
+    }]
+  }
+  articles.value.unshift(newArticle)
+  activeArticle.value = `article-${newId}`
+  // 重置表单并关闭弹窗
+  newArticleForm.articleTitle = ''
+  newArticleForm.versionTitle = ''
+  newArticleForm.content = ''
+  showNewArticleDialog.value = false
+}
+
+const showToolbar = ref(false) // 是否显示工具栏
+const selectedText = ref('')   // 当前选中的文字
+const toolbarPos = reactive({ x: 0, y: 0 }) // 工具栏坐标
+const isSelecting = ref(false) // 是否正在选择
+const handleTextSelection=(e)=>{
+  const selection = window.getSelection()
+  if (!selection.toString().trim()) return // 如果没有选中内容则返回
+
+
+    // 打印 clientX / Y 看是否为有效值
+  console.log('clientX:', e.clientX)
+  console.log('clientY:', e.clientY)
+  selectedText.value = selection.toString() // 保存选中的文字
+  showToolbar.value = true // 显示工具栏
+  toolbarPos.x = e.clientX // 设置工具栏 X 坐标
+  toolbarPos.y = e.clientY - 40 // 设置工具栏 Y 坐标
+  console.log(toolbarPos)
+  isSelecting.value = true // 标记为正在选择
+}
+
+const handleClickOutside = (e) => {
+  if (!isSelecting.value) {
+    showToolbar.value = false
+  }
+  isSelecting.value = false
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
@@ -402,6 +688,8 @@ const formatTime = (timestamp) => {
 }
 
 .upload-section {
+  display: flex;
+  gap: 10px;
   padding: 10px;
   border-bottom: 1px solid #eee;
   
@@ -464,5 +752,9 @@ const formatTime = (timestamp) => {
   overflow: auto;
 }
 
+.selection-toolbar {
+  position: fixed; /* 或 absolute */
+  z-index: 9999;
+}
 
 </style>
