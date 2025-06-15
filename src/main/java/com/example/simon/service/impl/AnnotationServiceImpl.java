@@ -79,13 +79,19 @@ public class AnnotationServiceImpl implements AnnotationService {
                 throw new IllegalArgumentException("关联ID必须大于0");
             }
 
+
             // 验证模块类型
             String moduleType = module.trim();
             if (!"writing".equals(moduleType) && !"reading".equals(moduleType) && !"dialogue".equals(moduleType)) {
                 throw new IllegalArgumentException("模块类型只能是writing、reading或dialogue");
             }
 
+            System.out.println("查询参数: userId=" + userId + ", module=" + module + ", refId=" + refId);
+
             List<Annotation> result = annotationMapper.selectByUserIdAndModuleAndRefId(userId, moduleType, refId);
+            
+            System.out.println("查询结果数量: " + (result != null ? result.size() : 0));
+            
             return result;
         } catch (Exception e) {
             throw e;
