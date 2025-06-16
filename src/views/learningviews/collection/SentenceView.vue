@@ -84,60 +84,6 @@
               <div class="sentence-text">{{ sentence.content }}</div>
               <div class="sentence-translation">{{ sentence.meaning}}</div>
               
-              <!-- 批注展示 -->
-              <!-- <div class="annotations">
-                <div 
-                  v-for="annotation in sentence.annotations"
-                  :key="annotation.id"
-                  class="annotation-item"
-                >
-                  <div class="annotation-header">
-                    <el-tag 
-                      :type="annotationTypeMap[annotation.type] || 'info'" 
-                      size="small"
-                    >
-                      {{ annotation.type }}
-                    </el-tag>
-                    <span class="annotation-time">
-                      {{ formatTime(annotation.createTime) }}
-                    </span>
-                  </div>
-                  <div class="annotation-content">{{ annotation.content }}</div>
-                </div>
-              </div> -->
-
-              <!-- 添加新批注 -->
-              <!-- <div class="new-annotation">
-                <el-input
-                  v-model="newAnnotationContent"
-                  placeholder="添加新批注..."
-                  type="textarea"
-                  :rows="2"
-                  class="annotation-input"
-                />
-                <div class="annotation-actions">
-                  <el-select 
-                    v-model="newAnnotationType" 
-                    placeholder="选择类型" 
-                    size="small"
-                    style="width: 120px"
-                  >
-                    <el-option
-                      v-for="type in annotationTypes"
-                      :key="type.value"
-                      :label="type.label"
-                      :value="type.value"
-                    />
-                  </el-select>
-                  <el-button 
-                    type="primary" 
-                    size="small" 
-                    @click="addAnnotation(sentence)"
-                  >
-                    添加批注
-                  </el-button>
-                </div>
-              </div> -->
             </div>
           </el-card>
         </div>

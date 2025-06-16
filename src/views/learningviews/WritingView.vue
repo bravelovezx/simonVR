@@ -27,6 +27,7 @@
         @select="handleSelectArticle"
         class="version-menu"
       >
+       <!-- <el-menu-item >作文记录</el-menu-item> -->
         <el-sub-menu 
           v-for="article in articles" 
           :key="article.id" 
@@ -257,7 +258,7 @@
 import { ref, reactive, computed,onMounted,onUnmounted } from 'vue'
 import { Document, Upload, MagicStick } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus';
-
+import request from '@/utils/request'
 const showAnnotationDialog = ref(false)
 
 // 增强后的文章数据结构
@@ -395,6 +396,34 @@ However, quantum decoherence time (currently averaging 50μs) remains the main b
 ]);
 
 
+//获取作文
+// 获取文章数据的接口
+const fetchArticles = async () => {
+  try {
+    const response = await request.get('/api/writings/with-versions');
+    if (response && response.length > 0) {
+      // 将接口返回的数据映射为当前页面使用的 articles 结构
+      const mappedArticles = response.map(item => ({
+        id: item.writing.writingId,
+        title: item.writing.writingTopic,
+        isCollected: false, // 默认未收藏
+        versions: item.versions.map(version => ({
+          id: version.versionId,
+          name: `版本 ${version.versionNumber}`, // 可以自定义版本名称
+          content: version.userDraft, // 使用用户草稿作为内容
+          time: new Date(version.createdAt).getTime(), // 转换为时间戳
+          annotations: [] // 默认无批注
+        }))
+      }));
+      // 更新本地 articles 数据
+      articles.value = [...mappedArticles, ...articles.value]; // 合并已有数据
+    }
+  } catch (error) {
+    ElMessage.error('获取文章数据失败，请稍后再试');
+    console.error('获取文章失败:', error);
+  }
+};
+
 
 // 查词功能
 
@@ -436,6 +465,41 @@ const showAnotation = () => {
   showAnnotationDialog.value = true
   console.log('showAnnotationDialog:', showAnnotationDialog.value)
 }
+
+// 在 script setup 中添加 saveAnnotation 方法
+
+const annotationText = ref('')
+const saveAnnotation = async () => {
+  if (!selectedText.value || !annotationText.value.trim()) return
+
+  try {
+    const res = await request.post('/api/annotations', {
+      content: annotationText.value,
+      text: selectedText.value,
+      articleId: currentArticle.value.id,
+      timestamp: new Date().toISOString()
+    })
+
+    if (res.success) {
+      ElMessage.success('批注已保存')
+      // 可选：将批注加入当前文章版本 annotations 数组
+      currentVersion.value.annotations.push({
+        text: annotationText.value,
+        selection: selectedText.value,
+        timestamp: new Date().toISOString()
+      })
+      showAnnotationDialog.value = false
+      annotationText.value = ''
+    } else {
+      ElMessage.error('保存失败，请重试')
+    }
+  } catch (error) {
+    console.error('保存批注出错:', error)
+    ElMessage.error('网络错误，请稍后再试')
+  }
+}
+
+
 
 //积累部分
 const showCollectDialog = ref(false) // 是否显示收藏对话框
@@ -654,6 +718,7 @@ const handleClickOutside = (e) => {
 }
 
 onMounted(() => {
+  fetchArticles() // 初始化时获取文章数据
   document.addEventListener('click', handleClickOutside)
 })
 
