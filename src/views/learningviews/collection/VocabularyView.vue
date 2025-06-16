@@ -54,8 +54,8 @@
           <el-table-column label="位置信息" width="240">
             <template #default="{ row }">
               <div>
-                <div>模块: {{ row.position.module }}</div>
-                <div>位置: 第 {{ row.position.row }} 行，第 {{ row.position.column }} 列</div>
+                <div>模块: {{ row.position?.module||'other' }}</div>
+                <div>位置: {{ row.position?.startPos || "start"}}-{{ row.position?.endPos||"other" }}</div>
                 <!-- <div>有效性: 
                   <el-tag :type="row.position.valid ? 'success' : 'danger'" size="small">
                     {{ row.position.valid ? '有效' : '无效' }}

@@ -13,6 +13,7 @@
           class="history-list"
           @select="selectHistory"
         >
+        
           <el-menu-item 
             v-for="(item, idx) in ChatHistory"
             :key="item.id"
@@ -57,7 +58,7 @@
                 <div class="bubble">
                   <div class="text">{{ msg.rawText }}</div>
                   <div style="font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif ;font-weight: 300;">{{ msg.correctedText }}</div>
-                  <div class="actions">
+                  <!-- <div class="actions">
                     <el-button 
                       type="primary" 
                       :icon="EditPen" 
@@ -72,7 +73,7 @@
                       size="small"
                       @click="addToCollection(idx)"
                     />
-                  </div>
+                  </div> -->
                 </div>
               </div>
             </div>

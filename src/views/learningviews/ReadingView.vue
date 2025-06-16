@@ -21,6 +21,7 @@
         </div>
       </el-header>
       <el-menu :default-active="activeArticle" @select="handleSelectArticle">
+        <!-- <el-menu-item >文章记录</el-menu-item> -->
         <el-menu-item 
           v-for="article in articles" 
           :key="article.readingId" 
@@ -41,8 +42,28 @@
       >
         <h2>{{ currentArticle.articleTitle }}</h2>
         <el-tag>{{ currentArticle.sourceType }}</el-tag>
-        <pre class="article-body">{{ currentArticle.articleContent}}</pre>
-        
+        <!-- <pre class="article-body">{{ currentArticle.articleContent}}</pre> -->
+
+        <div class="article-body">
+          <template v-for="(part, index) in renderedContent" :key="index">
+            <span v-if="part.type === 'text'">{{ part.value }}</span>
+            <el-popover
+              v-else
+              placement="top"
+              trigger="click"
+              :content="part.annotation.annotationContent"
+              :title="`批注于 ${formatDate(part.annotation.createdAt)}`"
+              width="250"
+            >
+              <template #reference>
+                <mark class="highlight">
+                  {{ part.value }}
+                </mark>
+              </template>
+            </el-popover>
+          </template>
+        </div>
+
         <!-- 浮动操作工具栏 -->
         <div 
           v-if="showToolbar" 
@@ -143,8 +164,9 @@
 </template>
 
 <script setup>
-import { ref, reactive,onMounted,onUnmounted } from 'vue'
+import { ref, reactive,onMounted,onUnmounted,computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { ElPopover } from 'element-plus'
 import request from '@/utils/request'
 
 const isSelecting = ref(false)
@@ -212,11 +234,19 @@ onUnmounted(() => {
 })
 
 
-const getAnnotations=async ()=>{
-  try{
+const getAnnotations = async () => {
+  try {
     const res = await request.get(`api/readings/${currentArticle.value.readingId}`)
     console.log('获取批注:', res)
-  }catch (error) {
+
+    if (res.success && res.data?.annotations) {
+      annotationsWithHighlight.value = res.data.annotations.map(annotation => ({
+        ...annotation,
+        highlighted: false
+      }))
+      console.log('批注数据:', annotationsWithHighlight.value)
+    }
+  } catch (error) {
     console.error('获取批注失败:', error)
     ElMessage.error('获取批注失败，请稍后重试')
   }
@@ -243,7 +273,9 @@ const getArticleList=async ()=>{
   }
 }
 
+const tempAnnotationRange = ref(null) // 临时存储选中文本的起止位置
 
+const annotationsWithHighlight = ref([]) //存储高亮信息
 
 // 文本选择处理
 const handleTextSelection = (e) => {
@@ -252,11 +284,21 @@ const handleTextSelection = (e) => {
 
   if (!selected) return
 
+  // 获取整个文章内容
+  const content = currentArticle.value.articleContent
+    // 查找选中文本在文章中的起始和结束位置
+  const startPos = content.indexOf(selected)
+  const endPos = startPos + selected.length
+
+
   selectedText.value = selected
   toolbarPos.x = e.clientX
   toolbarPos.y = e.clientY - 40
   showToolbar.value = true
   isSelecting.value = true // 标记为正在选择
+
+    // 存储选中文本的起止位置，用于保存批注时发送给后端
+  tempAnnotationRange.value = { startPos, endPos }
 }
 
 // 查词功能
@@ -273,11 +315,14 @@ const handleLookup = async() => {
   showLookupDialog.value = true
   // alert(`查询单词: ${selectedText.value}`)
   try {
-    const response = await request.post('/api/lookup', {
-      text: selectedText.value
+    const response = await request.post('/api/translate/translate', {
+      q: selectedText.value,
+      from:"en",
+      to:"zh-CHS",
+      vocabId:5
     })
-
-    lookupResult.value = response.data
+    console.log('查询结果:', response.data)
+    // lookupResult.value = response.data
   } catch (error) {
     ElMessage.error('查询失败，请稍后再试')
     console.error('查词失败:', error)
@@ -359,47 +404,77 @@ const saveToCollection = async() => {
 
 
 
+// 高亮处理
+const renderedContent = computed(() => {
+  const content = currentArticle.value?.articleContent || ''
+  const annotations = annotationsWithHighlight.value || []
+
+  const parts = []
+  let lastIndex = 0
+
+  // 按照 startPos 排序，避免重叠冲突
+  const sortedAnnotations = [...annotations].sort((a, b) => a.position.startPos - b.position.startPos)
+
+  sortedAnnotations.forEach(annotation => {
+    const { startPos, endPos } = annotation.position
+    const before = content.slice(lastIndex, startPos)
+    const marked = content.slice(startPos, endPos)
+
+    if (before) parts.push({ type: 'text', value: before })
+    parts.push({ type: 'highlight', value: marked, annotation })
+
+    lastIndex = endPos
+  })
+
+  const remaining = content.slice(lastIndex)
+  if (remaining) parts.push({ type: 'text', value: remaining })
+
+  return parts
+})
+
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
+}
+
+
 // 保存批注
-const saveAnnotation = async() => {
-  // if (annotationText.value.trim()) {
-  //   currentArticle.value.annotations.push({
-  //     text: annotationText.value,
-  //     selection: selectedText.value,
-  //     timestamp: new Date().toISOString()
-  //   })
-    try{
-const res=await request.post('/api/annotations', {
-      position:{
+const saveAnnotation = async () => {
+  if (!annotationText.value.trim()) return
+
+  const { startPos, endPos } = tempAnnotationRange.value
+
+  try {
+    const res = await request.post('/api/annotations', {
+      position: {
         module: 'reading',
-        refId:articles.value[0].id,
-        row:123,
-        column:456
+        refId: currentArticle.value.readingId,
+        startPos,
+        endPos
       },
       original: selectedText.value,
       annotationContent: annotationText.value
     })
 
-    console.log('this is res:',res)
     if (res.success) {
       ElMessage.success('添加批注成功')
-      // editDialogVisible.value = false
-    }else{
-      ElMessage.error('添加批注，请稍后重试')
-      // editDialogVisible.value = false
+
+      // 将新批注加入本地列表，用于后续高亮
+      annotationsWithHighlight.value.push({
+        ...res.data,
+        position: { startPos, endPos },
+        original: selectedText.value,
+        annotationContent: annotationText.value
+      })
     }
-    
-    
-    // fetchAnnotations()
-    
+
   } catch (error) {
-    ElMessage.error('修改失败',error)
-    // editDialogVisible.value = false
-  }finally{
-// editDialogVisible.value = false
+    ElMessage.error('添加批注失败，请稍后重试')
+  } finally {
     showAnnotationDialog.value = false
     annotationText.value = ''
   }
-    
 }
 // }
 </script>
@@ -448,5 +523,12 @@ const res=await request.post('/api/annotations', {
   border-radius: 4px;
   padding: 4px;
   z-index: 1000;
+}
+
+.highlight {
+  background-color: yellow;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

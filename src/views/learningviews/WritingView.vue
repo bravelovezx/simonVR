@@ -27,6 +27,7 @@
         @select="handleSelectArticle"
         class="version-menu"
       >
+       <!-- <el-menu-item >作文记录</el-menu-item> -->
         <el-sub-menu 
           v-for="article in articles" 
           :key="article.writing.writingId" 

@@ -32,7 +32,7 @@
             <div class="position-info">
               <el-tag type="success" size="small" @click="console.log(row.position.refId)">{{ row.position?.module||'other' }}</el-tag>
               <span class="ref-id">#{{ row.position?.refId || 'id' }}</span>
-              <span class="location">{{ row.position?.startPos || "start"}}-{{ row.position?.endPos||"other" }})</span>
+              <span class="location">{{ row.position?.startPos || "start"}}-{{ row.position?.endPos||"other" }}</span>
             </div>
           </template>
         </el-table-column>
@@ -210,7 +210,7 @@ const handleDelete = async (id) => {
     // 实际替换为API调用
     // await axios.delete(`/api/annotations/${id}`)
     const res=await request.delete(`/api/annotations/${id}`)
-    if (!res.data.success) {
+    if (!res.success) {
       ElMessage.error('删除失败，请稍后重试')
       return
     }
