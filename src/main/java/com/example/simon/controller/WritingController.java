@@ -134,19 +134,19 @@ public class WritingController {
     @Operation(summary = "获取作文版本详情")
     public ResponseEntity<Map<String, Object>> getVersion(@PathVariable Integer versionId) {
         Integer currentUserId = getCurrentUserId();
-        
+
         // 获取版本详情
         WritingVersion version = writingService.getVersionById(versionId, currentUserId);
-        
+
         // 获取与该版本相关的所有批注
         List<Annotation> annotations = annotationService.getAnnotationsByUserIdAndModuleAndRefId(
                 currentUserId, "writing", versionId);
-        
+
         // 构建响应数据
         Map<String, Object> response = new HashMap<>();
         response.put("version", version);
         response.put("annotations", annotations);
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -190,22 +190,22 @@ public class WritingController {
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit) {
         Integer currentUserId = getCurrentUserId();
-        
+
         // 获取用户的所有作文
         List<Writing> writings = writingService.searchWritings(currentUserId, keyword, offset, limit);
-        
+
         // 为每个作文获取其所有版本，并构建响应数据
         List<Map<String, Object>> result = writings.stream().map(writing -> {
             Map<String, Object> writingWithVersions = new HashMap<>();
             writingWithVersions.put("writing", writing);
-            
+
             // 获取该作文的所有版本
             List<WritingVersion> versions = writingService.getVersionsByWritingId(writing.getWritingId(), currentUserId);
             writingWithVersions.put("versions", versions);
-            
+
             return writingWithVersions;
         }).collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(result);
     }
 }

@@ -10,15 +10,14 @@ import java.time.LocalDateTime;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class WritingVersion {
-    private Integer versionId;
-    private Integer writingId;
-    private Integer versionNumber;
-    private String userDraft;
-    private String correctedDraft;
+    private Integer versionId;      // 版本记录ID
+    private Integer writingId;      // 所属作文ID
+    private String versionName;     // 版本名称
+    private String content;         // 作文内容
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // 创建时间
 
     public Integer getVersionId() {
         return versionId;
@@ -26,14 +25,6 @@ public class WritingVersion {
 
     public void setVersionId(Integer versionId) {
         this.versionId = versionId;
-    }
-
-    public Integer getVersionNumber() {
-        return versionNumber;
-    }
-
-    public void setVersionNumber(Integer versionNumber) {
-        this.versionNumber = versionNumber;
     }
 
     public Integer getWritingId() {
@@ -44,20 +35,20 @@ public class WritingVersion {
         this.writingId = writingId;
     }
 
-    public String getUserDraft() {
-        return userDraft;
+    public String getVersionName() {
+        return versionName;
     }
 
-    public void setUserDraft(String userDraft) {
-        this.userDraft = userDraft;
+    public void setVersionName(String versionName) {
+        this.versionName = versionName;
     }
 
-    public String getCorrectedDraft() {
-        return correctedDraft;
+    public String getContent() {
+        return content;
     }
 
-    public void setCorrectedDraft(String correctedDraft) {
-        this.correctedDraft = correctedDraft;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public LocalDateTime getCreatedAt() {
