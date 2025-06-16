@@ -29,33 +29,33 @@
       >
         <el-sub-menu 
           v-for="article in articles" 
-          :key="article.id" 
-          :index="`article-${article.id}`"
+          :key="article.writing.writingId" 
+          :index="`article-${article.writing.writingId}`"
         >
           <template #title>
             <div class="article-title">
-              <span>{{ article.title }}</span>
-              <el-tag 
+              <span>{{ article.writing.writingTopic }}</span>
+              <!-- <el-tag 
                 v-if="article.isCollected" 
                 type="warning" 
                 size="small" 
                 effect="dark"
               >
                 已收藏
-              </el-tag>
+              </el-tag> -->
             </div>
           </template>
           
           <!-- 版本列表 -->
           <el-menu-item 
             v-for="version in article.versions"
-            :key="version.id"
-            :index="`version-${article.id}-${version.id}`"
+            :key="version.versionId"
+            :index="`version-${article.writing.writingId}-${version.versionId}`"
           >
             <div class="version-item">
               <el-icon><Document /></el-icon>
-              <span class="version-name">{{ version.name }}</span>
-              <span class="version-time">{{ formatTime(version.time) }}</span>
+              <span class="version-name">{{ version.user }}</span>
+              <!-- <span class="version-time">{{ formatTime(version.time) }}</span> -->
             </div>
           </el-menu-item>
         </el-sub-menu>
@@ -77,7 +77,7 @@
             AI润色
           </el-button>
           <el-tag type="info" effect="dark">
-            当前版本: {{ currentVersion.name }}
+            创建时间: {{ currentVersion.createdAt }}
           </el-tag>
         </div>
 
@@ -86,7 +86,7 @@
           class="content-editor"
           @mouseup="handleTextSelection"
         >
-          <h2>{{ currentArticle.title }}</h2>
+          <!-- <h2>{{ currentArticle.title }}</h2> -->
           <!-- <el-input
             v-if="editing"
             v-model="currentVersion.content"
@@ -94,7 +94,7 @@
             :rows="15"
             resize="none"
           /> -->
-          <pre  class="article-body" @mouseup="handleTextSelection">{{ currentVersion.content }}</pre>
+          <pre  class="article-body" @mouseup="handleTextSelection">{{ currentVersion.correctedDraft }}</pre>
            <!-- 浮动操作工具栏 -->
         <div 
           v-if="showToolbar" 
@@ -257,142 +257,64 @@
 import { ref, reactive, computed,onMounted,onUnmounted } from 'vue'
 import { Document, Upload, MagicStick } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus';
-
+import request from '@/utils/request'
+const annotationText = ref('') // 用于存储批注内容
 const showAnnotationDialog = ref(false)
 
 // 增强后的文章数据结构
 const articles = ref([
-  {
-    id: 1,
-    title: '人工智能的伦理思考',
-    isCollected: true,
-    versions: [
-      {
-        id: 1,
-        name: '初稿',
-        content: `The rapid development of artificial intelligence brings numerous ethical issues. Algorithmic bias may lead to discrimination, the moral dilemmas of autonomous driving need to be addressed, and data privacy protection faces challenges. We must establish a sound ethical framework to ensure that technological progress does not deviate from humanistic values.`,
-        time: 1672502400000,
-        annotations: [
-          {
-            text: "具体案例支撑 needed",
-            selection: "算法偏见可能导致歧视",
-            timestamp: 1672503000000
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: '修订版',
-        content: `The exponential development of artificial intelligence is triggering profound ethical reflections. Take the U.S. COMPAS judicial evaluation system as an example—its algorithm shows a bias error of up to 45% against minorities, revealing how black-box algorithms may exacerbate social discrimination. In autonomous driving, the well-known variant of the "trolley problem" requires systems to make ethical decisions instantly, necessitating engineers to predefine ethical priorities. Additionally, the boundaries of data collection in medical AI blur the balance between privacy and technological advancement. Establishing ethics committees with diverse stakeholders and creating traceable algorithm audit mechanisms may be prerequisites for human-machine symbiosis.`,
-        time: 1675180800000,
-        annotations: []
-      },
-      {
-        id: 3,
-        name: 'AI润色版',
-        content: `The rapid advancement of AI technology is pushing human society into deep ethical waters. The controversial case of the COMPAS judicial assessment system shows algorithmic bias can result in up to 45% misjudgment against ethnic groups, exposing the potential threat of black-box algorithms to social fairness. In autonomous driving, the classic trolley problem has evolved—when an inevitable collision occurs, how should the system prioritize between the elderly and children, or passengers and pedestrians? This transcends mere technology and touches philosophical essence. On another front, the insatiable data collection by medical AI is reshaping the boundaries of privacy. Perhaps only by building interdisciplinary ethical governance frameworks and developing explainable, auditable, and traceable AI systems can we find a balance point between innovation and humanity.`,
-        time: 1677600000000,
-        annotations: []
-      }
-    ]
-  },
-  {
-    id: 2,
-    title: '数字经济赋能乡村振兴',
-    isCollected: false,
-    versions: [
-      {
-        id: 1,
-        name: '调研笔记',
-        content: `Current Status of Rural E-commerce Development:
-- Livestream e-commerce adoption is increasing
-- Logistics costs remain relatively high
-- Low standardization of agricultural products
-- Noticeable shortage of digital talent
-
-Typical case: Suichang County, Zhejiang trained 500+ farmer livestreamers through the "Village Broadcasting Program", with online sales exceeding 300 million yuan in 2022.`,
-        time: 1676102400000,
-        annotations: [
-          {
-            text: "Needs specific data source",
-            selection: "2022年线上销售额破3亿",
-            timestamp: 1676103000000
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: '正式报告',
-        content: `According to the 2023 White Paper from the Ministry of Agriculture and Rural Affairs, China's rural online retail sales have reached 2.17 trillion yuan, an 8.4% year-on-year increase. However, constraints remain significant: the standardization rate of agricultural products is below 30%, making quality control difficult; county-level logistics costs are 42% higher than in urban areas; and the digital talent gap exceeds 2 million. Suichang County's "Village Broadcasting Academy" model is worth emulating. With government-led training, 587 farmer broadcasters were cultivated in three years, promoting specialty products like dried sweet potatoes and camellia oil, achieving an average annual online growth rate of 300%. The GMV in 2022 reached 320 million yuan (Source: Suichang Bureau of Commerce). It is recommended to build a "cloud warehouse + production base" supply chain system, implement agricultural product traceability codes, and integrate digital skills training into new farmer development programs.`,
-        time: 1678742400000,
-        annotations: []
-      }
-    ]
-  },
-  {
-    id: 3,
-    title: '《追风筝的人》书评',
-    isCollected: true,
-    versions: [
-      {
-        id: 1,
-        name: '随笔草稿',
-        content: `Amir’s journey of redemption is filled with metaphor. The kite symbolizes both childhood memories and a sense of guilt. Hassan’s cleft lip scar, like a smiling wound, suggests the insurmountability of class division. The act of kite running is essentially a pursuit of courage and conscience.`,
-        time: 1679472000000,
-        annotations: [
-          {
-            text: "Add specific plot reference",
-            selection: "哈桑的兔唇手术痕迹",
-            timestamp: 1679472600000
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: '深度分析',
-        content: `Hosseini skillfully constructs a symbolic system through two surgeries: Hassan’s cleft lip repair, which on the surface represents redemption from Amir’s father, in reality exposes the limitations of class salvation—even if physical defects are sutured, the cracks in master-servant relations remain. Amir’s eventual act of risking his life to adopt Sohrab is a "psychological surgery" whose traumatic healing mirrors Hassan’s earlier assault by Assef during the kite chase. In the novel, the kite string is like a double helix of fate, entwining betrayal and loyalty, cowardice and bravery. When Amir shouts, "For you, a thousand times over," it is not just personal redemption but a literary healing of Afghanistan's national trauma.`,
-        time: 1680307200000,
-        annotations: []
-      }
-    ]
-  },
-  {
-    id: 4,
-    title: '量子计算技术简报',
-    isCollected: true,
-    versions: [
-      {
-        id: 1,
-        name: '会议记录',
-        content: `Controversy over Google’s quantum supremacy:
-- In 2019, claimed its 53-qubit Sycamore processor completed in 200 seconds a task that would take a supercomputer 10,000 years
-- IBM questioned the claim, citing room for classical algorithm optimization
-- Practical application still faces challenges such as decoherence time and error rates`,
-        time: 1682899200000,
-        annotations: [
-          {
-            text: "Need updated 2023 progress",
-            selection: "2019年宣称53量子位",
-            timestamp: 1682900000000
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: '技术白皮书',
-        content: `According to a recent study published in *Nature* (April 2023), quantum computing is evolving from "proof of supremacy" toward practical application:
-1. Quantum advantage: IBM launched the 433-qubit Osprey processor, reducing error rates to 0.1%
-2. Algorithm breakthroughs: Quantum chemical simulations achieved practical progress in material discovery, increasing lithium battery R&D efficiency by 40%
-3. Hybrid architecture: Microsoft Azure Quantum enabled quantum-classical hybrid programming to solve logistics optimization problems
-4. Error correction: Advances in surface code theory brought logical qubit error rates into the 10^-4 threshold
-
-However, quantum decoherence time (currently averaging 50μs) remains the main bottleneck for practical use, requiring exploration of new approaches combining superconducting and ion trap technologies.`,
-        time: 1685577600000,
-        annotations: []
-      }
-    ]
-  }
+    {
+        "versions": [    //作文所有版本
+            {
+                "versionId": 5,   //作文版本id
+                "writingId": 11,  //作文id
+                "versionNumber": 58,  //不用管这个字段，没用
+                "userDraft": "occaecat ad elit",  //作文正文
+                "correctedDraft": "sit dolor Ut irure",  //润色后版本
+                "createdAt": "2025-06-14 15:08:45"  //创建时间
+            },
+            {
+                "versionId": 6,
+                "writingId": 11,
+                "versionNumber": 58,
+                "userDraft": "occaecat ad elit",
+                "correctedDraft": "sit dolor Ut irure",
+                "createdAt": "2025-06-14 15:08:46"
+            },
+            {
+                "versionId": 7,
+                "writingId": 11,
+                "versionNumber": 58,
+                "userDraft": "occaecat ad elit",
+                "correctedDraft": "sit dolor Ut irure",
+                "createdAt": "2025-06-14 15:08:48"
+            }
+        ],
+        "writing": {
+            "writingId": 11,  //作文id
+            "userId": 22,  //user id
+            "writingTopic": "https400/400?lock=5847176496914640",  //作文题目
+            "sourceType": "user_input",  //来源（enum字段，咱们的都是user_input,不用考虑别的）
+            "createdAt": "2025-06-14 15:05:27", //创建时间
+            "updatedAt": "2025-06-14 15:05:27"  //修改时间
+        }
+    }
 ]);
+
+
+const getWritingArticles = async() => {
+  // 模拟从API获取文章数据
+  try{
+    const res=await request.get('/api/writings/with-versions')
+    console.log('获取文章数据:', res)
+    articles.value=res
+  }catch(error){
+    console.error('获取文章数据失败:', error)
+    ElMessage.error('获取文章数据失败，请稍后再试')
+  }
+  
+
+}
 
 
 
@@ -435,6 +357,49 @@ const showAnotation = () => {
   }
   showAnnotationDialog.value = true
   console.log('showAnnotationDialog:', showAnnotationDialog.value)
+}
+
+
+// 保存批注
+const saveAnnotation = async() => {
+  // if (annotationText.value.trim()) {
+  //   currentArticle.value.annotations.push({
+  //     text: annotationText.value,
+  //     selection: selectedText.value,
+  //     timestamp: new Date().toISOString()
+  //   })
+    try{
+const res=await request.post('/api/annotations', {
+      position:{
+        module: 'writing',
+        refId:currentArticle.value.writing.writingId,
+        
+      },
+      original: selectedText.value,
+      annotationContent: annotationText.value
+    })
+
+    console.log('this is res:',res)
+    if (res.success) {
+      ElMessage.success('添加批注成功')
+      // editDialogVisible.value = false
+    }else{
+      ElMessage.error('添加批注，请稍后重试')
+      // editDialogVisible.value = false
+    }
+    
+    
+    // fetchAnnotations()
+    
+  } catch (error) {
+    ElMessage.error('修改失败',error)
+    // editDialogVisible.value = false
+  }finally{
+// editDialogVisible.value = false
+    showAnnotationDialog.value = false
+    annotationText.value = ''
+  }
+    
 }
 
 //积累部分
@@ -547,8 +512,9 @@ const handleSelectArticle = (index) => {
   activeArticle.value = index
   if (index.startsWith('version')) {
     const [_, articleId, versionId] = index.split('-')
-    const article = articles.value.find(a => a.id === parseInt(articleId))
-    currentVersion.value = article.versions.find(v => v.id === parseInt(versionId))
+    const article = articles.value.find(a => a.writing.writingId === parseInt(articleId))
+    currentVersion.value = article.versions.find(v => v.versionId === parseInt(versionId))
+    console.log('当前版本:', currentVersion.value)
   }
 }
 
@@ -630,6 +596,30 @@ const showToolbar = ref(false) // 是否显示工具栏
 const selectedText = ref('')   // 当前选中的文字
 const toolbarPos = reactive({ x: 0, y: 0 }) // 工具栏坐标
 const isSelecting = ref(false) // 是否正在选择
+
+// 处理文本选择事件
+
+// const handleTextSelection = (e) => {
+//   const selection = window.getSelection()
+//   const selected = selection.toString().trim()
+//   if (!selected) return
+
+//   // 获取整个文章内容
+//   const content = currentArticle.value.articleContent
+
+//   // 查找选中文本在文章中的起始和结束位置
+//   const startPos = content.indexOf(selected)
+//   const endPos = startPos + selected.length
+
+//   selectedText.value = selected
+//   toolbarPos.x = e.clientX
+//   toolbarPos.y = e.clientY - 40
+//   showToolbar.value = true
+//   isSelecting.value = true
+
+//   // 存储选中文本的起止位置，用于保存批注时发送给后端
+//   tempAnnotationRange.value = { startPos, endPos }
+// }
 const handleTextSelection=(e)=>{
   const selection = window.getSelection()
   if (!selection.toString().trim()) return // 如果没有选中内容则返回
@@ -639,6 +629,7 @@ const handleTextSelection=(e)=>{
   console.log('clientX:', e.clientX)
   console.log('clientY:', e.clientY)
   selectedText.value = selection.toString() // 保存选中的文字
+  console.log('选择的文件 selectedText:', selectedText.value)
   showToolbar.value = true // 显示工具栏
   toolbarPos.x = e.clientX // 设置工具栏 X 坐标
   toolbarPos.y = e.clientY - 40 // 设置工具栏 Y 坐标
@@ -654,6 +645,7 @@ const handleClickOutside = (e) => {
 }
 
 onMounted(() => {
+  getWritingArticles() // 初始化时获取文章数据
   document.addEventListener('click', handleClickOutside)
 })
 
@@ -754,7 +746,6 @@ onUnmounted(() => {
 
 .selection-toolbar {
   position: fixed; /* 或 absolute */
-  z-index: 9999;
 }
 
 </style>

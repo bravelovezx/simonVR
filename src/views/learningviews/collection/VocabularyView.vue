@@ -208,6 +208,7 @@ const getWordList=  async () => {
     const response = await request.get('/api/accumulations/my/type/word')
     wordList.value = response.data
   } catch (error) {
+    ElMessage.error('获取词汇列表失败，请稍后重试')
     console.error('获取词汇列表失败:', error)
   }
 }
