@@ -279,6 +279,7 @@ const annotationsWithHighlight = ref([]) //存储高亮信息
 
 // 文本选择处理
 const handleTextSelection = (e) => {
+  console.log("00000000000")
   const selection = window.getSelection()
   const selected = selection.toString().trim()
 
@@ -299,6 +300,7 @@ const handleTextSelection = (e) => {
 
     // 存储选中文本的起止位置，用于保存批注时发送给后端
   tempAnnotationRange.value = { startPos, endPos }
+  console.log('选中文本:', selectedText.value, '起始位置:', startPos, '结束位置:', endPos)
 }
 
 // 查词功能
@@ -371,9 +373,9 @@ const saveToCollection = async() => {
     meaning:meaning,
     position:{
       module:'reading',
-      refId:123,
-      row:1,
-      column:1
+      refId:currentArticle.value.readingId,
+      startPos: tempAnnotationRange.value.startPos,
+      endPos: tempAnnotationRange.value.endPos
     }
     
   })
@@ -444,6 +446,7 @@ const saveAnnotation = async () => {
   if (!annotationText.value.trim()) return
 
   const { startPos, endPos } = tempAnnotationRange.value
+  console.log("startPos:", startPos, "endPos:", endPos)
 
   try {
     const res = await request.post('/api/annotations', {

@@ -55,7 +55,7 @@
           >
             <div class="version-item">
               <el-icon><Document /></el-icon>
-              <span class="version-name">{{ version.user }}</span>
+              <span class="version-name">{{ version.versionName}}</span>
               <!-- <span class="version-time">{{ formatTime(version.time) }}</span> -->
             </div>
           </el-menu-item>
@@ -71,11 +71,11 @@
         <div class="action-bar">
           <el-button 
             type="primary" 
-            @click="handlePolish"
+            @click="enableEditing"
             :loading="polishing"
           >
             <el-icon><MagicStick /></el-icon>
-            AI润色
+            打开编辑
           </el-button>
           <el-tag type="info" effect="dark">
             创建时间: {{ currentVersion.createdAt }}
@@ -87,7 +87,7 @@
           class="content-editor"
           @mouseup="handleTextSelection"
         >
-          <!-- <h2>{{ currentArticle.title }}</h2> -->
+          <h2>{{ currentVersion.versionName }}</h2>
           <!-- <el-input
             v-if="editing"
             v-model="currentVersion.content"
@@ -95,7 +95,25 @@
             :rows="15"
             resize="none"
           /> -->
-          <pre  class="article-body" @mouseup="handleTextSelection">{{ currentVersion.correctedDraft }}</pre>
+          
+          <el-input
+            v-if="editing"
+            v-model="currentVersion.content"
+            type="textarea"
+            :rows="15"
+            resize="none"
+          />
+          <div v-else class="article-body" >
+            {{ currentVersion.content }}
+          </div>
+
+          <!-- 添加保存按钮 -->
+          <div class="edit-actions" v-if="editing">
+            <el-button type="primary" @click="saveChanges">保存修改</el-button>
+            <el-button @click="cancelEdit">取消</el-button>
+          </div>
+
+
            <!-- 浮动操作工具栏 -->
         <div 
           v-if="showToolbar" 
@@ -259,48 +277,66 @@ import { ref, reactive, computed,onMounted,onUnmounted } from 'vue'
 import { Document, Upload, MagicStick } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus';
 import request from '@/utils/request'
+// import { ElPopover } from 'element-plus'
+const editing = ref(false)
 const annotationText = ref('') // 用于存储批注内容
 const showAnnotationDialog = ref(false)
-
+const currentVersion = ref(null)
 // 增强后的文章数据结构
 const articles = ref([
     {
-        "versions": [    //作文所有版本
+        "versions": [
             {
-                "versionId": 5,   //作文版本id
-                "writingId": 11,  //作文id
-                "versionNumber": 58,  //不用管这个字段，没用
-                "userDraft": "occaecat ad elit",  //作文正文
-                "correctedDraft": "sit dolor Ut irure",  //润色后版本
-                "createdAt": "2025-06-14 15:08:45"  //创建时间
+                "versionId": 10,
+                "writingId": 16,
+                "versionName": "My Expectation of Campus Food Festival",
+                "content": "Last week, I hear our school will have a food festival. It will be a big activity in our campus. Many students and teacher will join. I feel very exciting for this festival.There will have many kinds of food from different place. Like Sichuan food, Guangdong food, Western food and so on. I like spicy food, so I hope can eat a lot of Sichuan dish. Also, maybe some food we never eat before. It is good chance to try new things.Also, I think this festival not only let us eat delicious food, but also help us to understand different culture. Because food is part of culture. I also hope can make new friends in the activity. Maybe talk about what food is their favorite.In one word, I feel this festival is very meaningful. I looking forward to come and join it.",
+                "createdAt": "2025-06-16 19:59:17"
             },
             {
-                "versionId": 6,
-                "writingId": 11,
-                "versionNumber": 58,
-                "userDraft": "occaecat ad elit",
-                "correctedDraft": "sit dolor Ut irure",
-                "createdAt": "2025-06-14 15:08:46"
+                "versionId": 11,
+                "writingId": 16,
+                "versionName": "My Expectation of Campus Food Festival",
+                "content": "Last week, I heard that our university will hold a campus food festival. It will be a grand event, and many students and teachers are expected to take part in it. I feel very excited about this festival.There will be a wide variety of foods from different regions, such as Sichuan cuisine, Cantonese dishes, and even Western-style meals. Since I enjoy spicy food, I especially look forward to tasting the Sichuan dishes. Besides, I hope to try some foods that I have never had before. It’s a great opportunity to explore new flavors.More importantly, I believe this festival is not just about eating delicious food. It also offers us a chance to learn more about different cultures, because food is an important part of culture. I also hope to make new friends by sharing our thoughts on food and discussing our favorite dishes.In a word, I think this festival is both meaningful and enjoyable. I’m really looking forward to joining it.",
+                "createdAt": "2025-06-16 20:00:22"
             },
             {
-                "versionId": 7,
-                "writingId": 11,
-                "versionNumber": 58,
-                "userDraft": "occaecat ad elit",
-                "correctedDraft": "sit dolor Ut irure",
-                "createdAt": "2025-06-14 15:08:48"
+                "versionId": 12,
+                "writingId": 16,
+                "versionName": "My Expectation of Campus Food Festival",
+                "content": "Recently, I was thrilled to learn that our university will host a campus food festival. As a passionate food lover, I see this as a wonderful opportunity to not only enjoy a variety of delicious dishes but also experience the richness of different cultures.The festival is expected to feature cuisines from across China and beyond, including spicy Sichuan food, delicate Cantonese dishes, and flavorful Western meals. Personally, I am especially looking forward to the Sichuan cuisine for its bold and exciting flavors. More importantly, I hope to discover some lesser-known traditional snacks or international foods I’ve never tried before.Beyond satisfying our taste buds, the food festival carries deeper cultural significance. Food is more than just nourishment—it reflects history, lifestyle, and values. By tasting diverse foods and talking with others, we can gain a better understanding of different regions and backgrounds. I also hope to make new friends and share our favorite dishes with each other.In short, I believe the campus food festival will be a memorable and meaningful experience. I can’t wait to take part in it and create lasting memories with classmates and teachers alike.",
+                "createdAt": "2025-06-16 20:00:43"
             }
         ],
         "writing": {
-            "writingId": 11,  //作文id
-            "userId": 22,  //user id
-            "writingTopic": "https400/400?lock=5847176496914640",  //作文题目
-            "sourceType": "user_input",  //来源（enum字段，咱们的都是user_input,不用考虑别的）
-            "createdAt": "2025-06-14 15:05:27", //创建时间
-            "updatedAt": "2025-06-14 15:05:27"  //修改时间
+            "writingId": 16,
+            "userId": 5,
+            "writingTopic": "My Expectation of Campus Food Festival",
+            "sourceType": "user_input",
+            "direction": "Suppose your university is going to hold a campus food festival. Write a composition to describe the food festival, and explain what you expect from it.",
+            "createdAt": "2025-06-16 19:48:59",
+            "updatedAt": "2025-06-16 19:48:59"
         }
     }
 ]);
+
+const getAnnotations = async () => {
+  try {
+    const res = await request.get(`api/readings/${currentArticle.value.readingId}`)
+    console.log('获取批注:', res)
+
+    if (res.success && res.data?.annotations) {
+      annotationsWithHighlight.value = res.data.annotations.map(annotation => ({
+        ...annotation,
+        highlighted: false
+      }))
+      console.log('批注数据:', annotationsWithHighlight.value)
+    }
+  } catch (error) {
+    console.error('获取批注失败:', error)
+    ElMessage.error('获取批注失败，请稍后重试')
+  }
+}
 
 
 const getWritingArticles = async() => {
@@ -349,7 +385,71 @@ const handleLookup = async() => {
 
 
 
+// 进入编辑模式
+const enableEditing = () => {
+  editing.value = !editing.value
+}
+
+// 保存修改
+const saveChanges = async () => {
+  try {
+    // 模拟 API 请求（请根据实际接口替换）
+    const res = await request.put(`/api/writing/versions/${currentVersion.value.versionId}`, {
+      content: currentVersion.value.content
+    })
+
+    if (res.success) {
+      ElMessage.success('保存成功')
+      editing.value = false
+    } else {
+      ElMessage.error('保存失败，请重试')
+    }
+  } catch (error) {
+    console.error('保存失败:', error)
+    ElMessage.error('网络错误，请稍后再试')
+  }
+}
+
+// 取消编辑
+const cancelEdit = () => {
+  editing.value = false
+}
+
+
+
 //批注部分
+const annotationsWithHighlight = ref([])
+
+
+const renderedContent = computed(() => {
+  const content = currentVersion.value?.content || ''
+  const annotations = annotationsWithHighlight.value || []
+
+  const parts = []
+  let lastIndex = 0
+
+  // 按照 startPos 排序，避免重叠冲突
+  const sortedAnnotations = [...annotations].sort((a, b) => a.position.startPos - b.position.startPos)
+
+  sortedAnnotations.forEach(annotation => {
+    const { startPos, endPos } = annotation.position
+    const before = content.slice(lastIndex, startPos)
+    const marked = content.slice(startPos, endPos)
+
+    if (before) parts.push({ type: 'text', value: before })
+    parts.push({ type: 'highlight', value: marked, annotation })
+
+    lastIndex = endPos
+  })
+
+  const remaining = content.slice(lastIndex)
+  if (remaining) parts.push({ type: 'text', value: remaining })
+
+  return parts
+})
+
+
+
 const showAnotation = () => {
   console.log('selectedText:', selectedText.value)
   if (!selectedText.value) {
@@ -369,15 +469,20 @@ const saveAnnotation = async() => {
   //     selection: selectedText.value,
   //     timestamp: new Date().toISOString()
   //   })
+  console.log('--------------',selectedText.value, annotationText.value)
+  console.log('tempAnnotationRange:', tempAnnotationRange.value)
+  console.log("refid:",currentVersion.value.versionId)
     try{
-const res=await request.post('/api/annotations', {
-      position:{
-        module: 'writing',
-        refId:currentArticle.value.writing.writingId,
-        
-      },
-      original: selectedText.value,
-      annotationContent: annotationText.value
+      const res=await request.post('/api/annotations', {
+          position:{
+            module: 'writing',
+            refId:currentVersion.value.versionId,
+            startPos: tempAnnotationRange.value.startPos,
+            endPos: tempAnnotationRange.value.endPos
+            
+          },
+          original: selectedText.value,
+          annotationContent: annotationText.value
     })
 
     console.log('this is res:',res)
@@ -439,10 +544,10 @@ const saveToCollection = async() => {
     content:text,
     meaning:meaning,
     position:{
-      module:'reading',
-      refId:123,
-      row:1,
-      column:1
+      module:'writing',
+      refId:currentVersion.value.versionId,
+      startPos: tempAnnotationRange.value.startPos,
+      endPos: tempAnnotationRange.value.endPos
     }
     
   })
@@ -477,10 +582,10 @@ const saveToCollection = async() => {
 const activeArticle = ref('')
 const currentArticle = computed(() => {
   const [_, articleId] = activeArticle.value.split('-')
-  return articles.value.find(a => a.id === parseInt(articleId))
+  return articles.value.writing.find(a => a.writingId === parseInt(articleId))
 })
 
-const currentVersion = ref(null)
+
 
 // AI润色相关
 const showPolishDialog = ref(false)
@@ -513,8 +618,25 @@ const handleSelectArticle = (index) => {
   activeArticle.value = index
   if (index.startsWith('version')) {
     const [_, articleId, versionId] = index.split('-')
+
+    // 找到对应的文章对象
     const article = articles.value.find(a => a.writing.writingId === parseInt(articleId))
-    currentVersion.value = article.versions.find(v => v.versionId === parseInt(versionId))
+
+    if (!article) {
+      console.warn(`找不到 ID 为 ${articleId} 的文章`)
+      return
+    }
+
+    // 再从该文章中找对应的版本
+    const version = article.versions.find(v => v.versionId === parseInt(versionId))
+
+    if (!version) {
+      console.warn(`找不到 versionId 为 ${versionId} 的版本`)
+      return
+    }
+
+    // 设置当前版本
+    currentVersion.value = version
     console.log('当前版本:', currentVersion.value)
   }
 }
@@ -599,33 +721,19 @@ const toolbarPos = reactive({ x: 0, y: 0 }) // 工具栏坐标
 const isSelecting = ref(false) // 是否正在选择
 
 // 处理文本选择事件
+const tempAnnotationRange = ref(null) // 临时存储选中文本的起止位置
 
-// const handleTextSelection = (e) => {
-//   const selection = window.getSelection()
-//   const selected = selection.toString().trim()
-//   if (!selected) return
 
-//   // 获取整个文章内容
-//   const content = currentArticle.value.articleContent
-
-//   // 查找选中文本在文章中的起始和结束位置
-//   const startPos = content.indexOf(selected)
-//   const endPos = startPos + selected.length
-
-//   selectedText.value = selected
-//   toolbarPos.x = e.clientX
-//   toolbarPos.y = e.clientY - 40
-//   showToolbar.value = true
-//   isSelecting.value = true
-
-//   // 存储选中文本的起止位置，用于保存批注时发送给后端
-//   tempAnnotationRange.value = { startPos, endPos }
-// }
 const handleTextSelection=(e)=>{
   const selection = window.getSelection()
+  const selected = selection.toString().trim() // 获取选中的文本.
   if (!selection.toString().trim()) return // 如果没有选中内容则返回
 
-
+  //获取当前文章内容
+  const content=currentVersion.value.content
+  const startPos=content.indexOf(selected)
+  const endPos=startPos+selected.length
+  
     // 打印 clientX / Y 看是否为有效值
   console.log('clientX:', e.clientX)
   console.log('clientY:', e.clientY)
@@ -636,6 +744,9 @@ const handleTextSelection=(e)=>{
   toolbarPos.y = e.clientY - 40 // 设置工具栏 Y 坐标
   console.log(toolbarPos)
   isSelecting.value = true // 标记为正在选择
+
+  tempAnnotationRange.value = { startPos, endPos }
+  console.log('选中文本:', selectedText.value, '起始位置:', startPos, '结束位置:', endPos)
 }
 
 const handleClickOutside = (e) => {
