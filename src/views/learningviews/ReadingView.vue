@@ -71,11 +71,13 @@
           :style="{ left: toolbarPos.x + 'px', top: toolbarPos.y + 'px' }"
         >
           <el-button-group>
-            <el-button size="small" @click="handleLookup">查词/翻译</el-button>
-            <el-button size="small" @click="showAnnotationDialog = true">批注</el-button>
+            <el-button plain size="small" type="primary" @click="handleLookup">查词/翻译</el-button>
+            <el-button plain size="small" type="success" @click="showAnnotationDialog = true">批注</el-button>
             <el-button 
+            plain
               size="small" 
               @click="toggleCollect"
+              type="primary"
             >
               积累
             </el-button>

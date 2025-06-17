@@ -1,4 +1,5 @@
 <template>
+  <button @click="console.log(currentArticle)">111</button>
   <el-container class="main-container">
     <!-- 左侧文章列表 -->
     <el-aside width="300px" class="article-list">
@@ -48,6 +49,13 @@
           </template>
           
           <!-- 版本列表 -->
+          <el-menu-item>
+            <el-icon><Plus /></el-icon>
+            <el-button @click="addNewEditArea(article.writing.writingId)">
+              点击新增版本
+            </el-button>
+          </el-menu-item>
+
           <el-menu-item 
             v-for="version in article.versions"
             :key="version.versionId"
@@ -92,7 +100,7 @@
                   :loading="polishing"
                 >
                   <!-- <el-icon><MagicStick /></el-icon> -->
-                  打开编辑
+                  打开/取消编辑
                 </el-button>
               </template>
             </el-popover>
@@ -113,14 +121,12 @@
           class="content-editor"
           @mouseup="handleTextSelection"
         >
-          <h2>{{ currentVersion.versionName }}</h2>
-          <!-- <el-input
-            v-if="editing"
-            v-model="currentVersion.content"
-            type="textarea"
-            :rows="15"
-            resize="none"
-          /> -->
+          <h2>作文名：{{ currentArticle.writing.writingTopic }}</h2>
+          <h3>版本名：{{ currentVersion.versionName }}</h3>
+          <el-text class="mx-1" type="info">作文要求：{{ currentArticle.writing.direction }}</el-text>
+          <!-- <h1>作文要求：{{ currentArticle.writing.direction }}</h1> -->
+          <el-divider />
+          
           
           <el-input
             v-if="editing"
@@ -137,7 +143,7 @@
           <div class="edit-actions" v-if="editing">
             <el-button type="primary" @click="saveToNowEdition" style="margin: 5px;">保存到该版本</el-button>
             <el-button type="primary" @click="saveToAnotherEdition"  style="margin: 5px;">保存到新版本</el-button>
-            <el-button @click="cancelEdit"  style="margin: 5px;">取消</el-button>
+            <el-button @click="cancelEdit"  style="margin: 5px;">取消编辑</el-button>
           </div>
 
 
@@ -148,7 +154,8 @@
           :style="{ left: toolbarPos.x + 'px', top: toolbarPos.y + 'px' }"
         >
           <el-button-group>
-            <el-button plain size="small" type="primary" @click="handleLookup">查词/翻译</el-button>
+            <el-button plain size="small" type="primary" @click="handleLookup" ">查词/翻译</el-button>
+            
             <el-button plain size="small" type="success" @click="showAnotation">批注</el-button>
             <el-button 
             plain
@@ -258,32 +265,53 @@
 
       <!-- 添加新文章对话框 -->
       <el-dialog v-model="showNewArticleDialog" title="新建作文" width="40%">
-    <el-form>
-      <el-form-item label="文章标题">
-        <el-input v-model="newArticleForm.articleTitle" placeholder="请输入文章标题" />
-      </el-form-item>
-      <el-form-item label="版本标题">
-        <el-input v-model="newArticleForm.versionTitle" placeholder="如：初稿/草稿/正式版" />
-      </el-form-item>
-      <el-form-item label="内容">
-        <el-input
-          v-model="newArticleForm.content"
-          type="textarea"
-          :rows="8"
-          placeholder="请输入文章内容"
-        />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="showNewArticleDialog = false">取消</el-button>
-      <el-button type="primary" @click="saveNewArticle">保存</el-button>
-    </template>
-  </el-dialog>
+          <el-form>
+            <el-form-item label="作文题目">
+              <el-input v-model="newArticleForm.articleTitle" placeholder="请输入作文题目" />
+            </el-form-item>
+            <!-- <el-form-item label="版本标题">
+              <el-input v-model="newArticleForm.versionTitle" placeholder="如：初稿/草稿/正式版" />
+            </el-form-item> -->
+            <el-form-item label="作文要求">
+              <el-input
+                v-model="newArticleForm.direction"
+                type="textarea"
+                :rows="8"
+                placeholder="请输入作文要求"
+              />
+            </el-form-item>
+          </el-form>
+        <template #footer>
+          <el-button @click="showNewArticleDialog = false">取消</el-button>
+          <el-button type="primary" @click="saveNewArticle">保存</el-button>
+        </template>
+      </el-dialog>
+      <!-- 添加新版本对话框 -->
+      <el-dialog v-model="showNewVersionDialog" title="新增版本" width="40%">
+  <el-form>
+    <el-form-item label="版本名称">
+      <el-input v-model="newVersionForm.versionName" placeholder="请输入版本名称" />
+    </el-form-item>
+    <el-form-item label="版本内容">
+      <el-input
+        v-model="newVersionForm.content"
+        type="textarea"
+        :rows="8"
+        placeholder="请输入版本内容"
+      />
+    </el-form-item>
+  </el-form>
+  <template #footer>
+    <el-button @click="showNewVersionDialog = false">取消</el-button>
+    <el-button type="primary" @click="saveNewVersion">确定</el-button>
+  </template>
+</el-dialog>
     </el-main>
   </el-container>
 </template>
 
 <script setup>
+import dayjs from 'dayjs'
 import { ref, reactive, computed,onMounted,onUnmounted } from 'vue'
 import { watch } from 'vue'
 import { Document, Upload, MagicStick } from '@element-plus/icons-vue'
@@ -335,21 +363,57 @@ const articles = ref([
     }
 ]);
 
-const getAnnotations = async () => {
-  try {
-    const res = await request.get(`api/readings/${currentArticle.value.readingId}`)
-    console.log('获取批注:', res)
+// 当前选中状态
+const activeArticle = ref('')
+const currentArticle = computed(() => {
+  const [_, articleId] = activeArticle.value.split('-')
+  return articles.value.find(a => a.writing.writingId === parseInt(articleId))
+})
 
-    if (res.success && res.data?.annotations) {
-      annotationsWithHighlight.value = res.data.annotations.map(annotation => ({
-        ...annotation,
-        highlighted: false
-      }))
-      console.log('批注数据:', annotationsWithHighlight.value)
+// 添加新版本编辑区
+
+
+const showNewVersionDialog = ref(false)
+const newVersionForm = reactive({
+  versionName: '',
+  content: ''
+})
+const addNewEditArea = () => {
+  if (!currentArticle.value.writing.writingId) {
+    ElMessage.warning('请先选择一篇文章')
+    return
+  }
+  showNewVersionDialog.value = true
+  newVersionForm.versionName = ''
+  newVersionForm.content = ''
+}
+
+const saveNewVersion = async () => {
+  if (!newVersionForm.versionName || !newVersionForm.content) {
+    ElMessage.error('请填写完整内容')
+    return
+  }
+  const writingId = currentArticle.value.writing.writingId
+  try {
+    const res = await request.post(`/api/writings/${writingId}/versions`, {
+      versionName: newVersionForm.versionName,
+      content: newVersionForm.content
+    })
+    if (res.success) {
+      ElMessage.success('新增版本成功')
+      // 可选：将新版本加入本地数据
+      currentArticle.value.versions.push({
+        versionId: res.data?.versionId || Date.now(),
+        versionName: newVersionForm.versionName,
+        content: newVersionForm.content,
+        createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss')
+      })
+      showNewVersionDialog.value = false
+    } else {
+      ElMessage.error(res.message || '新增版本失败')
     }
-  } catch (error) {
-    console.error('获取批注失败:', error)
-    ElMessage.error('获取批注失败，请稍后重试')
+  } catch (e) {
+    ElMessage.error('新增版本失败')
   }
 }
 
@@ -406,7 +470,7 @@ const handleLookup = async() => {
 
 // 进入编辑模式
 const enableEditing = () => {
-  editing.value = true
+  editing.value = !editing.value
   hasUnsavedChanges.value = false // 重置状态
 }
 watch(
@@ -650,12 +714,7 @@ const saveToCollection = async() => {
 
 
 
-// 当前选中状态
-const activeArticle = ref('')
-const currentArticle = computed(() => {
-  const [_, articleId] = activeArticle.value.split('-')
-  return articles.value.find(a => a.writing.writingId === parseInt(articleId))
-})
+
 
 
 
@@ -776,32 +835,44 @@ const addNewArticle = () => {
 }
 
 // 新增：保存新文章
-const saveNewArticle = () => {
-  console.log('Saving new article:', newArticleForm)
-  if (!newArticleForm.value.articleTitle || !newArticleForm.value.versionTitle) 
-  {
-    ElMessage.error('文章标题和版本标题不能为空')
+// import dayjs from 'dayjs' // 推荐用 dayjs 格式化时间
+
+const saveNewArticle = async () => {
+  if (!newArticleForm.value.articleTitle) {
+    ElMessage.error('作文标题不能为空')
     return
   }
-  const newId = Date.now()
-  const newArticle = {
-    id: newId,
-    title: newArticleForm.value.articleTitle,
-    isCollected: false,
-    versions: [{
-      id: 1,
-      name: newArticleForm.value.versionTitle,
-      content: newArticleForm.value.content,
-      time: Date.now()
-    }]
+  if (!newArticleForm.value.direction) {
+    ElMessage.error('作文要求不能为空')
+    return
   }
-  articles.value.unshift(newArticle)
-  activeArticle.value = `article-${newId}`
-  // 重置表单并关闭弹窗
-  newArticleForm.articleTitle = ''
-  newArticleForm.versionTitle = ''
-  newArticleForm.content = ''
-  showNewArticleDialog.value = false
+
+  const now = dayjs().format('YYYY-MM-DD HH:mm:ss')
+  const body = {
+    writingTopic: newArticleForm.value.articleTitle,
+    direction: newArticleForm.value.direction,
+    sourceType: 'user_input',
+    createdAt: now,
+    updatedAt: now
+  }
+
+  try {
+    const res = await request.post('/api/writings', body)
+    console.log('新建作文响应:', res)
+    if (res.writingId) {
+      ElMessage.success('新建作文成功')
+      // 可选：刷新文章列表
+      getWritingArticles()
+      showNewArticleDialog.value = false
+      newArticleForm.value.articleTitle = ''
+      newArticleForm.value.direction = ''
+      newArticleForm.value.content = ''
+    } else {
+      ElMessage.error(res.message || '新建作文失败')
+    }
+  } catch (error) {
+    ElMessage.error('新建作文失败')
+  }
 }
 
 const showToolbar = ref(false) // 是否显示工具栏
@@ -962,6 +1033,10 @@ watch(
 
 .selection-toolbar {
   position: fixed; /* 或 absolute */
+    background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 4px;
+  padding: 4px;
 }
 
 </style>
