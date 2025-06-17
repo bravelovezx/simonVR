@@ -1,5 +1,5 @@
 <template>
-  <button @click="console.log(currentArticle)">111</button>
+  <!-- <button @click="console.log(currentArticle)">111</button> -->
   <el-container class="main-container">
     <!-- 左侧文章列表 -->
     <el-aside width="300px" class="article-list">
@@ -97,7 +97,6 @@
                 <el-button 
                   type="primary" 
                   @click="enableEditing"
-                  :loading="polishing"
                 >
                   <!-- <el-icon><MagicStick /></el-icon> -->
                   打开/取消编辑
@@ -154,7 +153,7 @@
           :style="{ left: toolbarPos.x + 'px', top: toolbarPos.y + 'px' }"
         >
           <el-button-group>
-            <el-button plain size="small" type="primary" @click="handleLookup" ">查词/翻译</el-button>
+            <el-button plain size="small" type="primary" @click="handleLookup">查词/翻译</el-button>
             
             <el-button plain size="small" type="success" @click="showAnotation">批注</el-button>
             <el-button 
@@ -249,7 +248,7 @@
           <!-- 润色后的内容 -->
           <div class="polish-section">
             <h4 class="section-title">✨ 润色后的内容</h4>
-            <pre class="content-box polished">{{ polishedContent || '正在润色中...' }}</pre>
+            <pre v-loading="polishing" class="content-box polished">{{ polishedContent || '正在润色中...' }}</pre>
           </div>
         </div>
       
@@ -306,6 +305,17 @@
     <el-button type="primary" @click="saveNewVersion">确定</el-button>
   </template>
 </el-dialog>
+<el-dialog v-model="showSaveVersionDialog" title="保存到新版本" width="30%">
+  <el-form>
+    <el-form-item label="版本名">
+      <el-input v-model="saveVersionForm.versionName" placeholder="请输入新版本名" />
+    </el-form-item>
+  </el-form>
+  <template #footer>
+    <el-button @click="showSaveVersionDialog = false">取消</el-button>
+    <el-button type="primary" @click="confirmSaveToAnotherEdition">确定</el-button>
+  </template>
+</el-dialog>
     </el-main>
   </el-container>
 </template>
@@ -317,6 +327,7 @@ import { watch } from 'vue'
 import { Document, Upload, MagicStick } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus';
 import request from '@/utils/request'
+import axios from 'axios';
 // import { ElPopover } from 'element-plus'
 const editing = ref(false)
 const annotationText = ref('') // 用于存储批注内容
@@ -363,6 +374,53 @@ const articles = ref([
     }
 ]);
 
+
+
+const showToolbar = ref(false) // 是否显示工具栏
+const selectedText = ref('')   // 当前选中的文字
+const toolbarPos = reactive({ x: 0, y: 0 }) // 工具栏坐标
+const isSelecting = ref(false) // 是否正在选择
+
+// 处理文本选择事件
+const tempAnnotationRange = ref(null) // 临时存储选中文本的起止位置
+
+
+const handleTextSelection=(e)=>{
+  const selection = window.getSelection()
+  console.log('selection:', selection)
+  const selected = selection.toString().trim() // 获取选中的文本.
+  if (!selection.toString().trim()) return // 如果没有选中内容则返回
+
+  //获取当前文章内容
+  const content=currentVersion.value.content
+  const startPos=content.indexOf(selected)
+  const endPos=startPos+selected.length
+
+  // selectedText.value = `<u>${selected}</u>`
+  
+    // 打印 clientX / Y 看是否为有效值
+  console.log('clientX:', e.clientX)
+  console.log('clientY:', e.clientY)
+  selectedText.value = selection.toString() // 保存选中的文字
+  console.log('选择的文件 selectedText:', selectedText.value)
+  showToolbar.value = true // 显示工具栏
+  console.log('************',showToolbar.value)
+  toolbarPos.x = e.clientX // 设置工具栏 X 坐标
+  toolbarPos.y = e.clientY - 40 // 设置工具栏 Y 坐标
+  console.log(toolbarPos)
+  isSelecting.value = true // 标记为正在选择
+
+  tempAnnotationRange.value = { startPos, endPos }
+  // console.log('选中文本:', selectedText.value, '起始位置:', startPos, '结束位置:', endPos)
+}
+
+const handleClickOutside = (e) => {
+  if (!isSelecting.value) {
+    showToolbar.value = false
+  }
+  isSelecting.value = false
+}
+
 // 当前选中状态
 const activeArticle = ref('')
 const currentArticle = computed(() => {
@@ -378,8 +436,13 @@ const newVersionForm = reactive({
   versionName: '',
   content: ''
 })
-const addNewEditArea = () => {
-  if (!currentArticle.value.writing.writingId) {
+
+
+const editionWritingId = ref(null) // 用于存储当前文章ID
+const addNewEditArea = (writingId) => {
+  editionWritingId.value = writingId // 更新当前文章ID
+  console.log('添加新版本编辑区，当前文章ID:', writingId)
+  if (!writingId) {
     ElMessage.warning('请先选择一篇文章')
     return
   }
@@ -393,21 +456,17 @@ const saveNewVersion = async () => {
     ElMessage.error('请填写完整内容')
     return
   }
-  const writingId = currentArticle.value.writing.writingId
+  const writingId = editionWritingId.value
   try {
     const res = await request.post(`/api/writings/${writingId}/versions`, {
       versionName: newVersionForm.versionName,
       content: newVersionForm.content
     })
-    if (res.success) {
+    console.log('新增版本响应:', res)
+    if (res.versionId) {
       ElMessage.success('新增版本成功')
       // 可选：将新版本加入本地数据
-      currentArticle.value.versions.push({
-        versionId: res.data?.versionId || Date.now(),
-        versionName: newVersionForm.versionName,
-        content: newVersionForm.content,
-        createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss')
-      })
+      getWritingArticles()
       showNewVersionDialog.value = false
     } else {
       ElMessage.error(res.message || '新增版本失败')
@@ -497,9 +556,14 @@ const handleBeforeUnload = (e) => {
 const saveToNowEdition = async() => {
   if (!currentVersion.value) return
   try {
-    const res = await request.post(`/api/writings/${currentVersion.value.versionId}/versions}`, )
+    console.log('当前版本内容:', currentVersion.value)
+    console.log('当前版本ID:', currentVersion.value.versionId)
+    const res = await request.put(`/api/writings/versions/${currentVersion.value.versionId}`,{
+      versionName: currentVersion.value.versionName,
+      content: currentVersion.value.content
+    } )
     console.log('保存到当前版本:', res)
-    if (res.success) {
+    if (res.versionId) {
       ElMessage.success('保存成功')
       editing.value = false // 退出编辑模式
        hasUnsavedChanges.value = false // 清除未保存标记
@@ -509,6 +573,42 @@ const saveToNowEdition = async() => {
   } catch (error) {
     console.error('保存失败:', error)
     ElMessage.error('保存失败，请稍后重试')
+  }
+}
+
+
+const showSaveVersionDialog = ref(false)
+const saveVersionForm = reactive({
+  versionName: ''
+})
+const saveToAnotherEdition = () => {
+  saveVersionForm.versionName = ''
+  showSaveVersionDialog.value = true
+}
+const confirmSaveToAnotherEdition = async () => {
+  if (!saveVersionForm.versionName) {
+    ElMessage.error('请输入版本名')
+    return
+  }
+  const writingId = currentArticle.value.writing.writingId
+  console.log('当前文章ID:', writingId)
+  try {
+    const res = await request.post(`/api/writings/${writingId}/versions`, {
+      versionName: saveVersionForm.versionName,
+      content: currentVersion.value.content // 假设这是当前编辑的内容
+    })
+    console.log('保存到新版本响应:', res)
+    if (res.versionId) {
+      ElMessage.success('保存到新版本成功')
+      // 可选：本地添加新版本
+      getWritingArticles()
+      showSaveVersionDialog.value = false
+      editing.value = false // 退出编辑模式
+    } else {
+      ElMessage.error(res.message || '保存失败')
+    }
+  } catch (e) {
+    ElMessage.error('保存失败')
   }
 }
 
@@ -523,35 +623,6 @@ const cancelEdit = () => {
 
 //批注部分
 const annotationsWithHighlight = ref([])
-
-
-const renderedContent = computed(() => {
-  const content = currentVersion.value?.content || ''
-  const annotations = annotationsWithHighlight.value || []
-
-  const parts = []
-  let lastIndex = 0
-
-  // 按照 startPos 排序，避免重叠冲突
-  const sortedAnnotations = [...annotations].sort((a, b) => a.position.startPos - b.position.startPos)
-
-  sortedAnnotations.forEach(annotation => {
-    const { startPos, endPos } = annotation.position
-    const before = content.slice(lastIndex, startPos)
-    const marked = content.slice(startPos, endPos)
-
-    if (before) parts.push({ type: 'text', value: before })
-    parts.push({ type: 'highlight', value: marked, annotation })
-
-    lastIndex = endPos
-  })
-
-  const remaining = content.slice(lastIndex)
-  if (remaining) parts.push({ type: 'text', value: remaining })
-
-  return parts
-})
-
 
 
 const showAnotation = () => {
@@ -597,9 +668,6 @@ const saveAnnotation = async() => {
       ElMessage.error('添加批注，请稍后重试')
       // editDialogVisible.value = false
     }
-    
-    
-    // fetchAnnotations()
     
   } catch (error) {
     ElMessage.error('修改失败',error)
@@ -719,15 +787,31 @@ const saveToCollection = async() => {
 
 
 // AI润色相关
+const polishing = ref(false) // 是否正在润色
 const showPolishDialog = ref(false) // 控制是否显示润色结果对话框
 const polishedContent = ref('')     // 存储 AI 返回的润色结果
 
 // 发起 AI 润色请求
 const handlePolish = async () => {
+  polishing.value = true // 开始润色
   if (!selectedText.value.trim()) return ElMessage.warning("请先选择一段文本")
   
   polishedContent.value = '润色结果测试' // 清空上次的润色结果
   showPolishDialog.value = true
+  const res=await request.post("/api/deepseek",{
+    prompt: selectedText.value,
+  })
+  console.log('AI润色请求:', res)
+
+  if(res.content != null && res.content !== ''){
+    console.log('AI润色结果:', res.content)
+    polishedContent.value = res.content // 更新润色结果
+  }else{
+    ElMessage.error("润色失败，请稍后再试")
+  }
+  polishing.value = false // 结束润色
+
+  // const res=axios.post
   // try {
   //   const res = await request.post("/api/polish", {
   //     text: selectedText.value
@@ -875,48 +959,7 @@ const saveNewArticle = async () => {
   }
 }
 
-const showToolbar = ref(false) // 是否显示工具栏
-const selectedText = ref('')   // 当前选中的文字
-const toolbarPos = reactive({ x: 0, y: 0 }) // 工具栏坐标
-const isSelecting = ref(false) // 是否正在选择
 
-// 处理文本选择事件
-const tempAnnotationRange = ref(null) // 临时存储选中文本的起止位置
-
-
-const handleTextSelection=(e)=>{
-  const selection = window.getSelection()
-  const selected = selection.toString().trim() // 获取选中的文本.
-  if (!selection.toString().trim()) return // 如果没有选中内容则返回
-
-  //获取当前文章内容
-  const content=currentVersion.value.content
-  const startPos=content.indexOf(selected)
-  const endPos=startPos+selected.length
-
-  // selectedText.value = `<u>${selected}</u>`
-  
-    // 打印 clientX / Y 看是否为有效值
-  console.log('clientX:', e.clientX)
-  console.log('clientY:', e.clientY)
-  selectedText.value = selection.toString() // 保存选中的文字
-  console.log('选择的文件 selectedText:', selectedText.value)
-  showToolbar.value = true // 显示工具栏
-  toolbarPos.x = e.clientX // 设置工具栏 X 坐标
-  toolbarPos.y = e.clientY - 40 // 设置工具栏 Y 坐标
-  console.log(toolbarPos)
-  isSelecting.value = true // 标记为正在选择
-
-  tempAnnotationRange.value = { startPos, endPos }
-  console.log('选中文本:', selectedText.value, '起始位置:', startPos, '结束位置:', endPos)
-}
-
-const handleClickOutside = (e) => {
-  if (!isSelecting.value) {
-    showToolbar.value = false
-  }
-  isSelecting.value = false
-}
 
 onMounted(() => {
   getWritingArticles() // 初始化时获取文章数据
@@ -933,8 +976,8 @@ watch(
   () => currentVersion.value?.content,
   (newContent, oldContent) => {
     if (editing.value && newContent !== oldContent) {
-      console.log("newContent:", newContent, "oldContent:", oldContent)
-      console.log('***********************',hasUnsavedChanges.value)
+      // console.log("newContent:", newContent, "oldContent:", oldContent)
+      // console.log('***********************',hasUnsavedChanges.value)
       hasUnsavedChanges.value = true
     }
   }

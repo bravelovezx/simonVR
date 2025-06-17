@@ -8,16 +8,9 @@
       </el-header> -->
       <el-header class="aside-header">
         <div class="upload-section">
-          <el-upload
-            action="#"
-            :show-file-list="false"
-            :before-upload="beforeUpload"
-            accept=".txt,.docx"
-          >
-            <el-button type="primary" plain class="upload-btn">
-              <el-icon><Upload /></el-icon> 上传阅读材料
-            </el-button>
-          </el-upload>
+          <el-button type="primary" plain class="upload-btn" @click="showCreateDialog = true">
+            <el-icon><Upload /></el-icon> 上传阅读材料
+          </el-button>
         </div>
       </el-header>
       <el-menu :default-active="activeArticle" @select="handleSelectArticle">
@@ -87,7 +80,7 @@
       </div>
 
       <!-- 查询对话框 -->
-       <el-dialog v-model="showLookupDialog" :title="`翻译/查词：${selectedText}`" width="40%">
+       <el-dialog v-model="showLookupDialog" :title="`${selectedText}`" width="40%">
         <div v-if="isFetching" style="text-align: center;">
           <el-spinner />
           <p>正在查询...</p>
@@ -95,8 +88,9 @@
       
         <div v-else-if="lookupResult">
         
-          <h4>🌐 中文翻译</h4>
-          <p>{{ lookupResult|| '暂无翻译' }}</p>
+          <hr style="height:2px;border-width:0;color:gray;background-color:gray">
+          <h3>🌐 中文翻译</h3>
+          <p style="font-size: 18px;">{{ lookupResult|| '暂无翻译' }}</p>
         </div>
       
         <div v-else>
@@ -147,6 +141,26 @@
         </template>
       </el-dialog>
 
+      <!-- 创建阅读记录对话框 -->
+      <el-dialog v-model="showCreateDialog" title="创建阅读记录" width="40%">
+        <el-form :model="createForm" label-width="80px">
+          <el-form-item label="标题">
+            <el-input v-model="createForm.articleTitle" placeholder="请输入阅读材料标题"></el-input>
+          </el-form-item>
+          <el-form-item label="内容">
+            <el-input 
+              v-model="createForm.articleContent" 
+              type="textarea" 
+              :rows="8" 
+              placeholder="请输入阅读材料内容"
+            ></el-input>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="showCreateDialog = false">取消</el-button>
+          <el-button type="primary" @click="createReading">创建</el-button>
+        </template>
+      </el-dialog>
 
     </el-main>
   </el-container>
@@ -490,7 +504,45 @@ const saveAnnotation = async () => {
     annotationText.value = ''
   }
 }
-// }
+
+// 创建阅读记录相关
+const showCreateDialog = ref(false)
+const createForm = reactive({
+  articleTitle: '',
+  articleContent: ''
+})
+
+// 创建阅读记录
+const createReading = async () => {
+  if (!createForm.articleTitle.trim() || !createForm.articleContent.trim()) {
+    ElMessage.warning('请填写完整的标题和内容')
+    return
+  }
+
+  try {
+    const response = await request.post('/api/readings', {
+      sourceType: 'user_input',
+      articleTitle: createForm.articleTitle,
+      articleContent: createForm.articleContent
+    })
+
+    if (response.success) {
+      ElMessage.success('创建阅读记录成功')
+      showCreateDialog.value = false
+      // 重置表单
+      createForm.articleTitle = ''
+      createForm.articleContent = ''
+      // 刷新阅读列表
+      getArticleList()
+    } else {
+      ElMessage.error(response.message || '创建失败，请稍后重试')
+    }
+  } catch (error) {
+    console.error('创建阅读记录失败:', error)
+    ElMessage.error('创建失败，请稍后重试')
+  }
+}
+
 </script>
 
 <style scoped>
