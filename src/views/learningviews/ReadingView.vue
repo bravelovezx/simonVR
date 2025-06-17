@@ -71,7 +71,7 @@
           :style="{ left: toolbarPos.x + 'px', top: toolbarPos.y + 'px' }"
         >
           <el-button-group>
-            <el-button size="small" @click="handleLookup">查词</el-button>
+            <el-button size="small" @click="handleLookup">查词/翻译</el-button>
             <el-button size="small" @click="showAnnotationDialog = true">批注</el-button>
             <el-button 
               size="small" 
@@ -85,29 +85,16 @@
       </div>
 
       <!-- 查询对话框 -->
-       <el-dialog v-model="showLookupDialog" :title="`查词：${selectedText}`" width="40%">
+       <el-dialog v-model="showLookupDialog" :title="`翻译/查词：${selectedText}`" width="40%">
         <div v-if="isFetching" style="text-align: center;">
           <el-spinner />
           <p>正在查询...</p>
         </div>
       
         <div v-else-if="lookupResult">
-          <h4>📘 单词释义</h4>
-          <p><strong>发音：</strong>{{ lookupResult.phonetic || '暂无' }}</p>
-        
-          <div v-for="(meaning, index) in lookupResult.meanings" :key="index">
-            <h5>👉 {{ meaning.partOfSpeech }}</h5>
-            <ul>
-              <li v-for="(def, i) in meaning.definitions" :key="i">
-                {{ def.definition }}
-                <br>
-                <em v-if="def.example">例句：{{ def.example }}</em>
-              </li>
-            </ul>
-          </div>
         
           <h4>🌐 中文翻译</h4>
-          <p>{{ lookupResult.translation || '暂无翻译' }}</p>
+          <p>{{ lookupResult|| '暂无翻译' }}</p>
         </div>
       
         <div v-else>
@@ -115,7 +102,7 @@
         </div>
       
         <template #footer>
-          <el-button type="primary" @click="showLookupDialog = false">积累</el-button>
+          <el-button type="primary" @click="addToCollection">积累</el-button>
           <el-button @click="showLookupDialog = false">关闭</el-button>
         </template>
       </el-dialog>
@@ -168,6 +155,7 @@ import { ref, reactive,onMounted,onUnmounted,computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ElPopover } from 'element-plus'
 import request from '@/utils/request'
+// import { lo } from 'element-plus/es/locale'
 
 const isSelecting = ref(false)
 // 文章示例数据
@@ -323,7 +311,8 @@ const handleLookup = async() => {
       to:"zh-CHS",
       vocabId:5
     })
-    console.log('查询结果:', response.data)
+    console.log('查询结果:', response)
+    lookupResult.value = response.translation[0] || null
     // lookupResult.value = response.data
   } catch (error) {
     ElMessage.error('查询失败，请稍后再试')
@@ -357,6 +346,36 @@ function determineType(text) {
 }
 
 
+const addToCollection=async()=>{
+  const meaning = lookupResult.value.trim()
+  const text=selectedText.value.trim()
+  if (!text || !meaning) {
+    ElMessage.warning('请填写完整内容')
+    return
+  }
+  const type=determineType(text)
+    const response=await request.post('/api/accumulations',{
+    type:type,
+    content:text,
+    meaning:meaning,
+    position:{
+      module:'reading',
+      refId:currentArticle.value.readingId,
+      startPos: tempAnnotationRange.value.startPos,
+      endPos: tempAnnotationRange.value.endPos
+    }
+    
+  })
+  console.log('保存响应:', response.success)
+  if(response.success){
+    ElMessage.success('已成功积累')
+  }else{
+    ElMessage.error('积累失败，请稍后重试')
+  }
+
+}
+
+
 const saveToCollection = async() => {
   const meaning = collectMeaning.value.trim()
   const text = selectedText.value.trim()
@@ -385,16 +404,6 @@ const saveToCollection = async() => {
   }else{
     ElMessage.error('积累失败，请稍后重试')
   }
-  // 将选中内容和释义保存到当前文章的 collectedItems 数组中
-  // currentArticle.value.collectedItems.push({
-  //   text,
-  //   meaning,
-  //   timestamp: new Date().toISOString()
-  // })
-
-  // 更新收藏状态
-  // isCollected.value = true
-  // currentArticle.value.isCollected = true
 
   // 关闭对话框
   showCollectDialog.value = false

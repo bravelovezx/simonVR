@@ -68,15 +68,41 @@
       
       <div v-if="currentVersion" class="content-box">
         <div v-if="showToolbar" class="selection-toolbar" :style="{ left: toolbarPos.x + 'px', top: toolbarPos.y + 'px' }"></div>
+        <!-- <span class="highlighted-text">{{ selectedText }}</span> -->
         <div class="action-bar">
-          <el-button 
+          <!-- <el-button 
             type="primary" 
             @click="enableEditing"
             :loading="polishing"
           >
-            <el-icon><MagicStick /></el-icon>
             打开编辑
-          </el-button>
+          </el-button> -->
+            <el-popover
+              placement="right-start"
+              title="提示"
+              :width="200"
+              trigger="hover"
+              content="打开编译以使用ai润色功能"
+              
+            >
+              <template #reference>
+                <el-button 
+                  type="primary" 
+                  @click="enableEditing"
+                  :loading="polishing"
+                >
+                  <!-- <el-icon><MagicStick /></el-icon> -->
+                  打开编辑
+                </el-button>
+              </template>
+            </el-popover>
+          <!-- <el-button type="primary" @click="console.log(hasUnsavedChanges)">
+            点击
+          </el-button> -->
+          <!-- <el-tag type="primary">
+            进入编辑模式以使用ai润色功能
+          </el-tag> -->
+
           <el-tag type="info" effect="dark">
             创建时间: {{ currentVersion.createdAt }}
           </el-tag>
@@ -109,8 +135,9 @@
 
           <!-- 添加保存按钮 -->
           <div class="edit-actions" v-if="editing">
-            <el-button type="primary" @click="saveChanges">保存修改</el-button>
-            <el-button @click="cancelEdit">取消</el-button>
+            <el-button type="primary" @click="saveToNowEdition" style="margin: 5px;">保存到该版本</el-button>
+            <el-button type="primary" @click="saveToAnotherEdition"  style="margin: 5px;">保存到新版本</el-button>
+            <el-button @click="cancelEdit"  style="margin: 5px;">取消</el-button>
           </div>
 
 
@@ -121,16 +148,17 @@
           :style="{ left: toolbarPos.x + 'px', top: toolbarPos.y + 'px' }"
         >
           <el-button-group>
-            <el-button size="small" @click="handleLookup">查词</el-button>
-            <el-button size="small" @click="showAnotation">批注</el-button>
+            <el-button plain size="small" type="primary" @click="handleLookup">查词/翻译</el-button>
+            <el-button plain size="small" type="success" @click="showAnotation">批注</el-button>
             <el-button 
+            plain
               size="small" 
-              :type="isCollected ? 'warning' : ''"
               @click="toggleCollect"
+              type="primary"
             >
               积累
             </el-button>
-            <el-button size="small">ai润色</el-button>
+            <el-button size="small"  type="success" v-if="editing" @click="handlePolish">ai润色</el-button>
             <!-- <el-button size="small" @click="showToolbar=false">取消显示</el-button> -->
           </el-button-group>
         </div>
@@ -141,29 +169,16 @@
 
 
         <!-- 查询对话框 -->
-       <el-dialog v-model="showLookupDialog" :title="`查词：${selectedText}`" width="40%">
+      <el-dialog v-model="showLookupDialog" :title="`翻译/查词：${selectedText}`" width="40%">
         <div v-if="isFetching" style="text-align: center;">
           <el-spinner />
           <p>正在查询...</p>
         </div>
       
         <div v-else-if="lookupResult">
-          <h4>📘 单词释义</h4>
-          <p><strong>发音：</strong>{{ lookupResult.phonetic || '暂无' }}</p>
-        
-          <div v-for="(meaning, index) in lookupResult.meanings" :key="index">
-            <h5>👉 {{ meaning.partOfSpeech }}</h5>
-            <ul>
-              <li v-for="(def, i) in meaning.definitions" :key="i">
-                {{ def.definition }}
-                <br>
-                <em v-if="def.example">例句：{{ def.example }}</em>
-              </li>
-            </ul>
-          </div>
         
           <h4>🌐 中文翻译</h4>
-          <p>{{ lookupResult.translation || '暂无翻译' }}</p>
+          <p>{{ lookupResult|| '暂无翻译' }}</p>
         </div>
       
         <div v-else>
@@ -171,7 +186,7 @@
         </div>
       
         <template #footer>
-          <el-button type="primary" @click="showLookupDialog = false">积累</el-button>
+          <el-button type="primary" @click="addToCollection">积累</el-button>
           <el-button @click="showLookupDialog = false">关闭</el-button>
         </template>
       </el-dialog>
@@ -214,31 +229,27 @@
         </template>
       </el-dialog>
 
+
       <!-- AI润色对话框 -->
-      <el-dialog 
-        v-model="showPolishDialog" 
-        title="AI润色建议" 
-        fullscreen
-      >
-        <div class="polish-container">
-          <div class="polish-column">
-            <h3>原文内容</h3>
-            <pre  class="article-body">{{ currentVersion.content }}</pre>
+      <el-dialog v-model="showPolishDialog" title="AI润色建议" width="80%" top="5vh">
+        <div class="polish-dialog-content">
+          <!-- 原文内容 -->
+          <div class="polish-section">
+            <h4 class="section-title">📝 原文内容</h4>
+            <pre class="content-box original">{{ selectedText }}</pre>
           </div>
-          <div class="polish-column">
-            <h3>润色建议 
-              <el-tag type="success" effect="dark">AI建议</el-tag>
-            </h3>
-            <pre class="polish-text">{{ polishedContent }}</pre>
+        
+          <!-- 润色后的内容 -->
+          <div class="polish-section">
+            <h4 class="section-title">✨ 润色后的内容</h4>
+            <pre class="content-box polished">{{ polishedContent || '正在润色中...' }}</pre>
           </div>
         </div>
+      
+        <!-- 底部操作 -->
         <template #footer>
-          <el-button @click="showPolishDialog = false">取消</el-button>
-          <el-button 
-            type="primary" 
-            @click="applyPolish"
-            :disabled="!polishedContent"
-          >
+          <el-button @click="showPolishDialog = false">关闭</el-button>
+          <el-button type="primary" @click="applyPolish" :disabled="!polishedContent">
             应用修改
           </el-button>
         </template>
@@ -274,6 +285,7 @@
 
 <script setup>
 import { ref, reactive, computed,onMounted,onUnmounted } from 'vue'
+import { watch } from 'vue'
 import { Document, Upload, MagicStick } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus';
 import request from '@/utils/request'
@@ -282,6 +294,9 @@ const editing = ref(false)
 const annotationText = ref('') // 用于存储批注内容
 const showAnnotationDialog = ref(false)
 const currentVersion = ref(null)
+
+const hasUnsavedChanges = ref(false) // 是否有未保存的更改
+
 // 增强后的文章数据结构
 const articles = ref([
     {
@@ -369,11 +384,15 @@ const handleLookup = async() => {
   showLookupDialog.value = true
   // alert(`查询单词: ${selectedText.value}`)
   try {
-    const response = await request.post('/api/lookup', {
-      text: selectedText.value
+    const response = await request.post('/api/translate/translate', {
+      q: selectedText.value,
+      from:"en",
+      to:"zh-CHS",
+      vocabId:5
     })
-
-    lookupResult.value = response.data
+    console.log('查询结果:', response)
+    lookupResult.value = response.translation[0] || null
+    // lookupResult.value = response.data
   } catch (error) {
     ElMessage.error('查询失败，请稍后再试')
     console.error('查词失败:', error)
@@ -387,32 +406,53 @@ const handleLookup = async() => {
 
 // 进入编辑模式
 const enableEditing = () => {
-  editing.value = !editing.value
+  editing.value = true
+  hasUnsavedChanges.value = false // 重置状态
+}
+watch(
+  () => editing.value,
+  (isEditing) => {
+    if (isEditing) {
+      window.addEventListener('beforeunload', handleBeforeUnload)
+    } else {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }
+)
+
+
+// beforeunload 处理函数
+const handleBeforeUnload = (e) => {
+  if (hasUnsavedChanges.value) {
+    const message = '您有未保存的更改，确定要离开吗？'
+    e.returnValue = message // 标准方式触发浏览器确认对话框
+    return message
+  }
 }
 
-// 保存修改
-const saveChanges = async () => {
+const saveToNowEdition = async() => {
+  if (!currentVersion.value) return
   try {
-    // 模拟 API 请求（请根据实际接口替换）
-    const res = await request.put(`/api/writing/versions/${currentVersion.value.versionId}`, {
-      content: currentVersion.value.content
-    })
-
+    const res = await request.post(`/api/writings/${currentVersion.value.versionId}/versions}`, )
+    console.log('保存到当前版本:', res)
     if (res.success) {
       ElMessage.success('保存成功')
-      editing.value = false
+      editing.value = false // 退出编辑模式
+       hasUnsavedChanges.value = false // 清除未保存标记
     } else {
-      ElMessage.error('保存失败，请重试')
+      ElMessage.error('保存失败，请稍后重试')
     }
   } catch (error) {
     console.error('保存失败:', error)
-    ElMessage.error('网络错误，请稍后再试')
+    ElMessage.error('保存失败，请稍后重试')
   }
 }
 
 // 取消编辑
+// 取消编辑
 const cancelEdit = () => {
   editing.value = false
+  hasUnsavedChanges.value = false
 }
 
 
@@ -529,6 +569,38 @@ function determineType(text) {
   }
 }
 
+const addToCollection=async()=>{
+  const meaning = lookupResult.value.trim()
+  const text=selectedText.value.trim()
+  if (!text || !meaning) {
+    ElMessage.warning('请填写完整内容')
+    return
+  }
+  const type=determineType(text)
+    const response=await request.post('/api/accumulations',{
+    type:type,
+    content:text,
+    meaning:meaning,
+    position:{
+      module:'writing',
+      refId:currentVersion.value.versionId,
+      startPos: tempAnnotationRange.value.startPos,
+      endPos: tempAnnotationRange.value.endPos
+    }
+    
+  })
+  console.log('保存响应:', response.success)
+  if(response.success){
+    ElMessage.success('已成功积累')
+  }else{
+    ElMessage.error('积累失败，请稍后重试')
+  }
+
+}
+
+
+
+
 const saveToCollection = async() => {
   const meaning = collectMeaning.value.trim()
   const text = selectedText.value.trim()
@@ -582,15 +654,54 @@ const saveToCollection = async() => {
 const activeArticle = ref('')
 const currentArticle = computed(() => {
   const [_, articleId] = activeArticle.value.split('-')
-  return articles.value.writing.find(a => a.writingId === parseInt(articleId))
+  return articles.value.find(a => a.writing.writingId === parseInt(articleId))
 })
 
 
 
 // AI润色相关
-const showPolishDialog = ref(false)
-const polishedContent = ref('')
-const polishing = ref(false)
+const showPolishDialog = ref(false) // 控制是否显示润色结果对话框
+const polishedContent = ref('')     // 存储 AI 返回的润色结果
+
+// 发起 AI 润色请求
+const handlePolish = async () => {
+  if (!selectedText.value.trim()) return ElMessage.warning("请先选择一段文本")
+  
+  polishedContent.value = '润色结果测试' // 清空上次的润色结果
+  showPolishDialog.value = true
+  // try {
+  //   const res = await request.post("/api/polish", {
+  //     text: selectedText.value
+  //   })
+    
+  //   if (res.success && res.data?.polished) {
+  //     polishedContent.value = res.data.polished
+  //     showPolishDialog.value = true
+  //   } else {
+  //     ElMessage.error("润色失败，请稍后再试")
+  //   }
+  // } catch (error) {
+  //   console.error("AI润色请求失败:", error)
+  //   ElMessage.error("网络错误，请检查连接")
+  // }
+}
+
+
+// 应用润色结果
+const applyPolish = () => {
+  if (!currentVersion.value || !polishedContent.value) return
+
+  const originalText = selectedText.value
+  const newText = polishedContent.value
+
+  // 替换选中的文本为润色后的内容
+  currentVersion.value.content = currentVersion.value.content.replace(originalText, newText)
+
+  selectedText.value = newText // 更新选中的文本
+
+  ElMessage.success("已成功应用润色内容！")
+  showPolishDialog.value = false
+}
 
 // 文件上传处理
 const beforeUpload = (file) => {
@@ -641,30 +752,8 @@ const handleSelectArticle = (index) => {
   }
 }
 
-// AI润色处理（模拟）
-const handlePolish = async () => {
-  polishing.value = true
-  // 模拟API调用
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  polishedContent.value = currentVersion.value.content
-    .replace(/confidence/g, 'strong confidence')
-    .replace(/fear/g, 'apprehension')
-    .replace(/Life is/g, 'Existence becomes')
-  showPolishDialog.value = true
-  polishing.value = false
-}
 
-// 应用润色结果
-const applyPolish = () => {
-  const newVersion = {
-    id: currentArticle.value.versions.length + 1,
-    name: `润色版 v${currentArticle.value.versions.length}`,
-    content: polishedContent.value,
-    time: Date.now()
-  }
-  currentArticle.value.versions.push(newVersion)
-  showPolishDialog.value = false
-}
+
 
 // 时间格式化
 const formatTime = (timestamp) => {
@@ -733,6 +822,8 @@ const handleTextSelection=(e)=>{
   const content=currentVersion.value.content
   const startPos=content.indexOf(selected)
   const endPos=startPos+selected.length
+
+  // selectedText.value = `<u>${selected}</u>`
   
     // 打印 clientX / Y 看是否为有效值
   console.log('clientX:', e.clientX)
@@ -764,6 +855,19 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+
+// 监听当前版本内容的变化
+watch(
+  () => currentVersion.value?.content,
+  (newContent, oldContent) => {
+    if (editing.value && newContent !== oldContent) {
+      console.log("newContent:", newContent, "oldContent:", oldContent)
+      console.log('***********************',hasUnsavedChanges.value)
+      hasUnsavedChanges.value = true
+    }
+  }
+)
 </script>
 
 <style scoped>
