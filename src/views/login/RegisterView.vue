@@ -39,7 +39,7 @@ const handleRegister = async () => {
     loading.value = false;
     ElNotification({
       title: '注册失败',
-      message:Response.message||'发生错误，请稍后再试',
+      message:Response.message||'请检查网络连接或稍后再试',
       type: 'error',
       duration: 3000
     });

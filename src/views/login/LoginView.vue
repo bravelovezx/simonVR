@@ -53,7 +53,7 @@ const handleLogin = async () => {
     loading.value = false;
     ElNotification({
       title: '登录失败',
-      message: error.response?.data?.message || '发生错误，请稍后再试',
+      message: error.response?.data?.message || '请检查用户名和密码',
       type: 'error',
       duration: 1500
     });
