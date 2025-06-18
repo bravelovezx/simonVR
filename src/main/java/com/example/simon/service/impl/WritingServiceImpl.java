@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,6 +80,25 @@ public class WritingServiceImpl implements WritingService {
     @Override
     public WritingVersion getVersionById(Integer versionId, Integer userId) {
         return versionMapper.selectById(versionId, userId);
+    }
+    
+    @Override
+    @Transactional
+    public WritingVersion updateVersion(WritingVersion version, Integer userId) {
+        // 先检查版本是否存在且属于当前用户
+        WritingVersion existingVersion = versionMapper.selectById(version.getVersionId(), userId);
+        if (existingVersion == null) {
+            throw new NoSuchElementException("作文版本不存在或无权限修改");
+        }
+        
+        // 更新版本内容
+        int rows = versionMapper.updateById(version, userId);
+        if (rows == 0) {
+            throw new RuntimeException("更新作文版本失败");
+        }
+        
+        // 返回更新后的版本
+        return versionMapper.selectById(version.getVersionId(), userId);
     }
 
     @Override

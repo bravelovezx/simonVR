@@ -30,6 +30,9 @@ public interface WritingService {
 
     // 获取单个版本（含用户验证）
     WritingVersion getVersionById(Integer versionId, Integer userId);
+    
+    // 更新作文版本内容
+    WritingVersion updateVersion(WritingVersion version, Integer userId);
 
     // 删除单个版本
     void deleteVersion(Integer versionId, Integer userId);
