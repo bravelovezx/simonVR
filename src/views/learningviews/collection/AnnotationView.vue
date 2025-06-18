@@ -27,7 +27,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="原文定位" width="200">
+        <!-- <el-table-column label="原文定位" width="200">
           <template #default="{ row }">
             <div class="position-info">
               <el-tag type="success" size="small" @click="console.log(row.position.refId)">{{ row.position?.module||'other' }}</el-tag>
@@ -35,7 +35,7 @@
               <span class="location">{{ row.position?.startPos || "start"}}-{{ row.position?.endPos||"other" }}</span>
             </div>
           </template>
-        </el-table-column>
+        </el-table-column> -->
 
         <el-table-column label="原文内容">
           <template #default="{ row }">

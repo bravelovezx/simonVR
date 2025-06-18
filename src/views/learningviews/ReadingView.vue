@@ -34,19 +34,22 @@
         @mouseup="handleTextSelection"
       >
         <h2>{{ currentArticle.articleTitle }}</h2>
-        <el-tag>{{ currentArticle.sourceType }}</el-tag>
+        <el-divider />
+        <!-- <el-tag style="margin-bottom: 10px;">{{ currentArticle.sourceType }}</el-tag> -->
+        <!-- <el-divider /> -->
         <!-- <pre class="article-body">{{ currentArticle.articleContent}}</pre> -->
 
         <div class="article-body">
           <template v-for="(part, index) in renderedContent" :key="index">
             <span v-if="part.type === 'text'">{{ part.value }}</span>
+            <!-- "`批注于 ${formatDate(part.annotation.createdAt)}`" -->
             <el-popover
               v-else
               placement="top"
               trigger="click"
-              :content="part.annotation.annotationContent"
-              :title="`批注于 ${formatDate(part.annotation.createdAt)}`"
-              width="250"
+              :content="`批注于 ${formatDate(part.annotation.createdAt)}`"
+              :title="part.annotation.annotationContent"
+              width="300"
             >
               <template #reference>
                 <mark class="highlight">
@@ -77,6 +80,15 @@
             <!-- <el-button size="small" @click="showToolbar=false">取消显示</el-button> -->
           </el-button-group>
         </div>
+      </div>
+      <div v-else class="content-box">
+        <!-- <p>请选择一篇文章进行阅读</p> -->
+        <el-empty
+          description="请选择一篇文章进行阅读"
+          image-size="80"
+          class="content-box"
+        >
+        </el-empty>
       </div>
 
       <!-- 查询对话框 -->

@@ -5,7 +5,7 @@
     <el-aside width="300px" class="article-list">
       <el-header class="aside-header">
         <div class="upload-section">
-          <el-upload
+          <!-- <el-upload
             action="#"
             :show-file-list="false"
             :before-upload="beforeUpload"
@@ -16,9 +16,9 @@
             </el-button>
 
 
-          </el-upload>
+          </el-upload> -->
             <el-button type="primary" plain @click="addNewArticle">
-               新建作文
+               <el-icon><CirclePlus /></el-icon>新建作文
             </el-button>
         </div>
       </el-header>
@@ -49,11 +49,12 @@
           </template>
           
           <!-- 版本列表 -->
-          <el-menu-item>
+          <el-menu-item @click="addNewEditArea(article.writing.writingId)">
             <el-icon><Plus /></el-icon>
-            <el-button @click="addNewEditArea(article.writing.writingId)">
+            <!-- <el-button @click="addNewEditArea(article.writing.writingId)">
               点击新增版本
-            </el-button>
+            </el-button> -->
+            点击新增版本
           </el-menu-item>
 
           <el-menu-item 
@@ -168,14 +169,28 @@
             <!-- <el-button size="small" @click="showToolbar=false">取消显示</el-button> -->
           </el-button-group>
         </div>
-        </div>
 
+        
+        </div>
+        
         <!-- 原有工具栏和对话框... -->
 
 
 
         <!-- 查询对话框 -->
-      <el-dialog v-model="showLookupDialog" :title="`翻译/查词：${selectedText}`" width="40%">
+      
+      </div>
+      <div v-else class="no-content">
+        <el-empty
+          description="请选择一篇文章进行写作"
+          image-size="80"
+          class="content-box"
+        >
+        </el-empty>
+        </div>
+
+
+        <el-dialog v-model="showLookupDialog" :title="`翻译/查词：${selectedText}`" width="40%">
         <div v-if="isFetching" style="text-align: center;">
           <el-spinner />
           <p>正在查询...</p>
@@ -213,8 +228,6 @@
           <el-button type="primary" @click="saveAnnotation">保存</el-button>
         </template>
       </el-dialog>
-      </div>
-
        <!-- 积累对话框 -->
       <el-dialog v-model="showCollectDialog" title="收藏并积累" width="30%">
         <p>您正在收藏以下内容：</p>
@@ -796,7 +809,7 @@ const handlePolish = async () => {
   polishing.value = true // 开始润色
   if (!selectedText.value.trim()) return ElMessage.warning("请先选择一段文本")
   
-  polishedContent.value = '润色结果测试' // 清空上次的润色结果
+  polishedContent.value = 'ai润色进行中....' // 清空上次的润色结果
   showPolishDialog.value = true
   const res=await request.post("/api/deepseek",{
     prompt: selectedText.value,
@@ -1081,5 +1094,9 @@ watch(
   border-radius: 4px;
   padding: 4px;
 }
+pre {
+    white-space: pre-wrap;
+}
+
 
 </style>

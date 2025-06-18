@@ -1,7 +1,7 @@
 <template>
   <el-header class="header">
     <div class="header-left">
-      <h2 class="site-name">Simon AI+英语学习平台</h2>
+      <h2 class="site-name" style="font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;">Simon AI+英语学习平台</h2>
       <el-menu
         :default-active="$route.path"
         mode="horizontal"

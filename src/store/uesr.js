@@ -15,6 +15,9 @@ export const useUserStore = defineStore('user', {
       this.token = ''
     },
   },
-  persist: true, // 持久化整个状态
+  persist: {
+    enabled: true,
+    storage: sessionStorage, // 改成 sessionStorage
+  },
 })
 

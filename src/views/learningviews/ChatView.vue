@@ -3,7 +3,7 @@
     <!-- 左侧：历史对话列表 -->
     <el-aside class="chat-history" width="300px">
       <el-header class="history-title">
-        <h3>📁📁 历史对话</h3>
+        <h3>📁 历史对话</h3>
       </el-header>
       <el-menu 
         :default-active="selectedIdx.toString()"

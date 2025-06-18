@@ -6,8 +6,8 @@
       <!-- 新增句子库标签页 -->
       <el-tab-pane label="句子积累" name="sentences">
         <!-- 操作栏 -->
-        <div class="action-bar">
-          <el-button type="primary" @click="openSentenceDialog(null)">
+        <div class="action-bar" style="margin-bottom: 5px;">
+          <el-button type="primary" @click="openSentenceDialog(null)" style="margin-bottom: 5px;">
             <el-icon><DocumentAdd /></el-icon> 添加句子
           </el-button>
           <div class="filter-group">

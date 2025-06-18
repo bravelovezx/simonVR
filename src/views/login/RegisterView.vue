@@ -85,7 +85,7 @@ const loading = ref(false);
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="formData.email">
             <template #prefix>
-              <el-icon><lock /></el-icon>
+              <el-icon><Message /></el-icon>
             </template>
           </el-input>
         </el-form-item>

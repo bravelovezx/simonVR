@@ -120,6 +120,7 @@ import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store/uesr';
 import request from '@/utils/request'
+import aipng from '@/assets/ai.png'
 import {
   User,
   Message,
@@ -137,7 +138,7 @@ const userInfo = ref({
   email: 'user@example.com',
   gender: 1,
   birthday: '1995-05-15',
-  avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+  avatar: aipng,
   memberDays: 128
 })
 

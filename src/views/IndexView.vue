@@ -4,7 +4,7 @@
     <el-main class="main-content">
       <router-view />
     </el-main>
-     <AiChatSidebar />
+     <!-- <AiChatSidebar /> -->
   </el-container>
 </template>
 

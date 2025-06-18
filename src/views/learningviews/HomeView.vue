@@ -108,6 +108,10 @@ import {
   MagicStick, DataAnalysis, Place
 } from '@element-plus/icons-vue'
 
+import vrLearning from '@/assets/vr-learning.png'
+import childrenLearning from '@/assets/childrenLearning.png'
+import annotaionImage from '@/assets/annotation.png'
+
 const router = useRouter()
 
 const features = ref([
@@ -150,7 +154,7 @@ const aiFeatures = ref([
       '个性化学习路径规划',
       '实时进度追踪分析'
     ],
-    image: 'https://example.com/ai-engine.png'
+    image: childrenLearning
   },
   {
     title: '沉浸式学习体验',
@@ -159,8 +163,26 @@ const aiFeatures = ref([
       '多模态学习材料',
       '跨平台学习同步'
     ],
-    image: 'https://example.com/immerse.png'
-  }
+    image: vrLearning
+  },
+    {
+    title: '高效批注管理',
+    points: [
+      '智能标记重点句子',
+      '多端同步批注记录',
+      '批注内容智能归档'
+    ],
+    image: annotaionImage
+  },
+  //   {
+  //   title: '词汇句库管理',
+  //   points: [
+  //     '个性化词汇本',
+  //     '常用句式智能分类',
+  //     '生词自动记忆提醒'
+  //   ],
+  //   image: vocabManager
+  // }
 ])
 
 const navigateTo = (path) => {

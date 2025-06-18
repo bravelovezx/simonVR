@@ -55,7 +55,7 @@
             <template #default="{ row }">
               <div>
                 <div>模块: {{ row.position?.module||'other' }}</div>
-                <div>位置: {{ row.position?.startPos || "start"}}-{{ row.position?.endPos||"other" }}</div>
+                <!-- <div>位置: {{ row.position?.startPos || "start"}}-{{ row.position?.endPos||"other" }}</div> -->
                 <!-- <div>有效性: 
                   <el-tag :type="row.position.valid ? 'success' : 'danger'" size="small">
                     {{ row.position.valid ? '有效' : '无效' }}
